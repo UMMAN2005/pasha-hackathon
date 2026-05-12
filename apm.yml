@@ -1,0 +1,12 @@
+name: agents-template
+version: 1.0.0
+description: Golden template for quickly starting with AI agents
+author: Umman Mammadov
+dependencies:
+  apm:
+  - affaan-m/everything-claude-code
+  - anthropics/skills
+  - obra/superpowers
+  mcp: []
+includes: auto
+scripts: {}
