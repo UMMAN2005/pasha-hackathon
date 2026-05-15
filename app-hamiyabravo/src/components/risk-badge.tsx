@@ -10,7 +10,7 @@ function getBandInfo(score: number): { label: string; color: string } {
     return { label: "Yüksək", color: "bg-amber-100 text-amber-800" };
   }
   if (score >= 40) {
-    return { label: "İzlə", color: "bg-emerald-100 text-emerald-800" };
+    return { label: "İzlə", color: "bg-teal-100 text-teal-800" };
   }
   return { label: "Sabit", color: "bg-green-100 text-green-800" };
 }

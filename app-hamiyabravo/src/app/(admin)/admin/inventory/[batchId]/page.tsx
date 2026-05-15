@@ -1,14 +1,8 @@
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-} from "recharts";
 import { getBatchDetail } from "@/server/services/inventory";
 import { RiskBadge } from "@/components/risk-badge";
 import { formatAzn } from "@/lib/money";
 import { BatchDetailClient } from "./client";
+import { SalesChart } from "./sales-chart";
 
 interface DetailPageProps {
   params: Promise<{ batchId: string }>;
@@ -65,19 +59,7 @@ export default async function BatchDetailPage(props: DetailPageProps) {
         <h2 className="text-lg font-semibold text-slate-900 mb-4">
           Satış Meyli (14 gün)
         </h2>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData}>
-            <XAxis dataKey="day" stroke="#cbd5e1" />
-            <YAxis stroke="#cbd5e1" />
-            <Line
-              type="monotone"
-              dataKey="qty"
-              stroke="#2563eb"
-              dot={false}
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <SalesChart data={chartData} />
         <p className="text-sm text-slate-600 mt-4">
           Orta gündəlik satış: <span className="font-semibold">{batch.avgDailySales}</span>
         </p>
@@ -134,7 +116,7 @@ export default async function BatchDetailPage(props: DetailPageProps) {
             Fəaliyyət Tarixçəsi
           </h2>
           <div className="space-y-3">
-            {batch.auditLogs.map((log: any) => (
+            {batch.auditLogs.map((log) => (
               <div
                 key={log.id}
                 className="flex items-start justify-between border-b border-slate-100 pb-3"

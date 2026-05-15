@@ -8,41 +8,53 @@ export interface ListBatchesFilter {
   status?: string;
 }
 
-export async function listBatches(filters: ListBatchesFilter) {
+const RISK_BANDS: Record<string, [number, number]> = {
+  Kritik: [80, 100],
+  "Yüksək": [60, 79],
+  "İzlə": [40, 59],
+  Sabit: [0, 39],
+};
+
+export async function listBatches(filters: ListBatchesFilter = {}) {
   const today = getToday();
 
   const batches = await prisma.inventoryBatch.findMany({
+    where: {
+      ...(filters.branch ? { branchId: filters.branch } : {}),
+      ...(filters.category
+        ? { product: { category: { name: filters.category } } }
+        : {}),
+    },
     include: {
-      product: {
-        include: { category: true },
-      },
+      product: { include: { category: true } },
       branch: true,
-      riskScores: {
-        orderBy: { generatedAt: "desc" },
-        take: 1,
-      },
-      recommendations: {
-        where: { status: "PENDING" },
-        take: 1,
-      },
+      riskScores: { orderBy: { generatedAt: "desc" }, take: 1 },
+      recommendations: { where: { status: "PENDING" }, take: 1 },
     },
   });
 
-  batches.sort((a, b) => (b.riskScores[0]?.riskScore ?? 0) - (a.riskScores[0]?.riskScore ?? 0));
+  const band = filters.riskBand ? RISK_BANDS[filters.riskBand] : null;
 
-  return batches.map((b) => ({
-    id: b.id,
-    product: b.product.name,
-    sku: b.product.sku,
-    branch: b.branch.name,
-    quantity: b.quantityOnHand,
-    expiryDate: b.expiryDate,
-    daysToExpiry: daysBetween(b.expiryDate, today),
-    riskScore: b.riskScores[0]?.riskScore ?? 0,
-    expectedLoss: b.riskScores[0]?.expectedLoss ?? 0,
-    recommendedAction: b.recommendations[0]?.reason || "—",
-    status: b.recommendations[0]?.status || "PENDING",
-  }));
+  return batches
+    .map((b) => ({
+      id: b.id,
+      product: b.product.name,
+      sku: b.product.sku,
+      branch: b.branch.name,
+      quantity: b.quantityOnHand,
+      expiryDate: b.expiryDate,
+      daysToExpiry: daysBetween(b.expiryDate, today),
+      riskScore: b.riskScores[0]?.riskScore ?? 0,
+      expectedLoss: b.riskScores[0]?.expectedLoss ?? 0,
+      recommendedAction: b.recommendations[0]?.reason || "—",
+      status: b.recommendations[0]?.status || "PENDING",
+    }))
+    .filter(
+      (r) =>
+        (!band || (r.riskScore >= band[0] && r.riskScore <= band[1])) &&
+        (!filters.status || r.status === filters.status)
+    )
+    .sort((a, b) => b.riskScore - a.riskScore);
 }
 
 export async function getBatchDetail(batchId: string) {
