@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { setSession, roleHome, type Role } from "@/lib/session";
+import { NotFoundError } from "@/lib/errors";
 import { redirect } from "next/navigation";
 
 export async function selectUserAction(formData: FormData) {
@@ -13,7 +14,7 @@ export async function selectUserAction(formData: FormData) {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new NotFoundError("User not found");
   }
 
   const role = user.role as Role;

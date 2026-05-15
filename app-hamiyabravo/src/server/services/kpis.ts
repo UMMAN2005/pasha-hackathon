@@ -116,6 +116,9 @@ export async function getKpisService() {
   const branchMap = Object.fromEntries(
     batchBranches.map((b) => [b.id, b.branch])
   );
+  const branchNameById = Object.fromEntries(
+    batchBranches.map((b) => [b.branch.id, b.branch.name])
+  );
 
   interface BranchLoss {
     branchId: string;
@@ -140,15 +143,9 @@ export async function getKpisService() {
     ([, a], [, b]) => b - a
   );
   for (const [branchId, total] of uniqueBranches) {
-    const branch = await prisma.branch.findUnique({
-      where: { id: branchId },
-    });
-    if (branch) {
-      branchLeaderboard.push({
-        branchId: branch.id,
-        branchName: branch.name,
-        expectedLoss: total,
-      });
+    const branchName = branchNameById[branchId];
+    if (branchName) {
+      branchLeaderboard.push({ branchId, branchName, expectedLoss: total });
     }
   }
 
