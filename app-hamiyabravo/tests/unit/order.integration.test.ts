@@ -2,25 +2,26 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { placeOrderService } from "@/server/services/order";
 import { prisma } from "@/lib/db";
 import { createListingFromRecommendation } from "@/server/services/listing";
-import { recalcRiskService } from "@/server/services/recalc";
+import { seedDatabase } from "@/../prisma/seed";
 
 describe("placeOrderService", () => {
   let testListingId: string;
   let buyerId: string;
 
   beforeAll(async () => {
-    await recalcRiskService({ all: true });
+    await seedDatabase();
 
     const rec = await prisma.recommendation.findFirstOrThrow({
-      where: { status: "PENDING" },
-      orderBy: { createdAt: "asc" },
-      skip: 1,
+      where: {
+        status: "PENDING",
+        batch: { product: { sku: "DARY-YOG-500" } },
+      },
     });
-    const newListing = await createListingFromRecommendation(rec.id, {
+    const listing = await createListingFromRecommendation(rec.id, {
       id: "order-test",
       name: "Order Test",
     });
-    testListingId = newListing.id;
+    testListingId = listing.id;
 
     const buyer = await prisma.company.findFirstOrThrow({
       where: { legalName: "Astoria Hotel" },

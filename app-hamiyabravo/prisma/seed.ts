@@ -222,7 +222,7 @@ export function buildSeedData() {
   };
 }
 
-async function main() {
+export async function seedDatabase() {
   const today = getToday();
   const data = buildSeedData();
 
@@ -323,7 +323,7 @@ async function main() {
 
 const isDirectRun = process.argv[1] === fileURLToPath(import.meta.url);
 if (isDirectRun) {
-  main()
+  seedDatabase()
     .then(() => {
       console.log("Seed finished");
       process.exit(0);

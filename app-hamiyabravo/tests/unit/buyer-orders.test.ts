@@ -3,37 +3,41 @@ import { getBuyerOrders } from "@/server/services/market";
 import { placeOrderService } from "@/server/services/order";
 import { prisma } from "@/lib/db";
 import { createListingFromRecommendation } from "@/server/services/listing";
-import { recalcRiskService } from "@/server/services/recalc";
+import { seedDatabase } from "@/../prisma/seed";
 
 describe("getBuyerOrders", () => {
+  let listingId: string;
+  let buyerId: string;
+
   beforeAll(async () => {
-    await recalcRiskService({ all: true });
-    const pendingRec = await prisma.recommendation.findFirstOrThrow({
-      where: { status: "PENDING" },
-      orderBy: { createdAt: "asc" },
-      skip: 2,
+    await seedDatabase();
+
+    const rec = await prisma.recommendation.findFirstOrThrow({
+      where: {
+        status: "PENDING",
+        batch: { product: { sku: "DARY-YOG-500" } },
+      },
     });
-    await createListingFromRecommendation(pendingRec.id, {
+    const listing = await createListingFromRecommendation(rec.id, {
       id: "buyer-orders-setup",
       name: "Buyer Orders Setup",
     });
-  });
+    listingId = listing.id;
 
-  it("returns buyer orders with pickup code and no internal fields", async () => {
-    const listing = await prisma.marketplaceListing.findFirstOrThrow({
-      where: { status: "ACTIVE" },
-    });
     const buyer = await prisma.company.findFirstOrThrow({
       where: { legalName: "Astoria Hotel" },
     });
+    buyerId = buyer.id;
+  });
 
+  it("returns buyer orders with pickup code and no internal fields", async () => {
     await placeOrderService({
-      listingId: listing.id,
+      listingId,
       quantity: 5,
-      buyerCompanyId: buyer.id,
+      buyerCompanyId: buyerId,
     });
 
-    const orders = await getBuyerOrders(buyer.id);
+    const orders = await getBuyerOrders(buyerId);
     expect(orders.length).toBeGreaterThan(0);
 
     const order = orders[0];

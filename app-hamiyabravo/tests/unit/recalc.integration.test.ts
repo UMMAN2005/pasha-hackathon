@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { recalcRiskService } from "@/server/services/recalc";
 import { prisma } from "@/lib/db";
+import { seedDatabase } from "@/../prisma/seed";
 
 describe("recalc (integration, needs seeded DB)", () => {
   beforeAll(async () => {
-    await recalcRiskService({ all: true });
+    // seedDatabase() runs recalcRiskService({ all: true }) as its final step.
+    await seedDatabase();
   });
 
   it("reproduces PRD §18 scores within ±2 and correct ordering", async () => {
