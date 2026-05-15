@@ -53,11 +53,13 @@ export default function ListingsPage() {
               onChange={(e) => setPickupCode(e.target.value.toUpperCase())}
               maxLength={6}
               className="flex-1 px-3 py-2 border border-slate-300 rounded-md font-mono"
+              data-testid="pickup-input"
             />
             <button
               onClick={handleConfirmPickup}
               disabled={loading}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-slate-300"
+              data-testid="pickup-submit"
             >
               {loading ? "Emallanır..." : "Təsdiqlə"}
             </button>
