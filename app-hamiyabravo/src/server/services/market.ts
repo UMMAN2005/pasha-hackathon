@@ -64,7 +64,10 @@ export async function getPublicListings(): Promise<PublicListing[]> {
     price: l.price,
     discountPercent: l.discountPercent,
     retailStruck: l.batch.retailPrice,
-    qtyAvailable: l.maxQty,
+    qtyAvailable: Math.min(
+      l.maxQty,
+      Math.max(0, l.batch.quantityOnHand - l.batch.quantityReserved)
+    ),
     pickupStart: l.pickupStart,
     pickupEnd: l.pickupEnd,
     categoryName: l.batch.product.category.name,
@@ -88,6 +91,8 @@ export async function getPublicListing(id: string): Promise<PublicListing> {
       batch: {
         select: {
           retailPrice: true,
+          quantityOnHand: true,
+          quantityReserved: true,
           product: {
             select: {
               name: true,
@@ -110,7 +115,13 @@ export async function getPublicListing(id: string): Promise<PublicListing> {
     price: listing.price,
     discountPercent: listing.discountPercent,
     retailStruck: listing.batch.retailPrice,
-    qtyAvailable: listing.maxQty,
+    qtyAvailable: Math.min(
+      listing.maxQty,
+      Math.max(
+        0,
+        listing.batch.quantityOnHand - listing.batch.quantityReserved
+      )
+    ),
     pickupStart: listing.pickupStart,
     pickupEnd: listing.pickupEnd,
     categoryName: listing.batch.product.category.name,
