@@ -60,8 +60,7 @@ export function AiChat() {
         ...prev,
         { role: "assistant", content: assistantMsg },
       ]);
-    } catch (error) {
-      console.error("Chat error:", error);
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Xəta baş verdi. Yenidən cəhd edin." },

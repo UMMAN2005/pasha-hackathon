@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { explainRecommendation } from "@/server/ai/explain";
+import { explainRecommendation, type ExplainInput, type BatchContext } from "@/server/ai/explain";
 import { narrateEvent } from "@/server/ai/narrate";
 
 describe("AI fallback (offline-safe)", () => {
@@ -8,10 +8,9 @@ describe("AI fallback (offline-safe)", () => {
   });
 
   it("explain falls back to deterministic reason", async () => {
-    const out = await explainRecommendation(
-      { reason: "Yüksək risk — B2B siyahıya əlavə et" } as any,
-      {} as any
-    );
+    const rec: ExplainInput = { reason: "Yüksək risk — B2B siyahıya əlavə et" };
+    const batch: BatchContext = {};
+    const out = await explainRecommendation(rec, batch);
     expect(out).toBe("Yüksək risk — B2B siyahıya əlavə et");
   });
 
