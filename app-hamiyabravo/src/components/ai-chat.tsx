@@ -1,68 +1,62 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Sparkles, X, Send } from "lucide-react";
 
 export function AiChat() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [messages, setMessages] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollToBottom();
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-
     const userMsg = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+    setMessages((p) => [...p, { role: "user", content: userMsg }]);
     setLoading(true);
-
     try {
-      const response = await fetch("/api/chat", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, { role: "user", content: userMsg }],
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Chat failed");
-      }
-
-      let assistantMsg = "";
-
-      if (response.body) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
+      let acc = "";
+      setMessages((p) => [...p, { role: "assistant", content: "" }]);
+      if (res.body) {
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          assistantMsg += chunk;
+          acc += dec.decode(value, { stream: true });
+          setMessages((p) => {
+            const n = [...p];
+            n[n.length - 1] = { role: "assistant", content: acc };
+            return n;
+          });
         }
       } else {
-        assistantMsg = await response.text();
+        acc = await res.text();
+        setMessages((p) => {
+          const n = [...p];
+          n[n.length - 1] = { role: "assistant", content: acc };
+          return n;
+        });
       }
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: assistantMsg },
-      ]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
+      setMessages((p) => [
+        ...p,
         { role: "assistant", content: "Xəta baş verdi. Yenidən cəhd edin." },
       ]);
     } finally {
@@ -74,75 +68,75 @@ export function AiChat() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 rounded-full bg-blue-600 p-3 text-white shadow-lg hover:bg-blue-700 transition"
-        title="AI assistantı aç"
+        className="bg-brand fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-5 py-3.5 font-bold text-white shadow-xl transition hover:scale-105"
+        style={{ boxShadow: "0 16px 40px -10px rgba(138,43,226,.6)" }}
       >
-        <span className="text-xl">💬</span>
+        <Sparkles className="h-5 w-5" />
+        AI köməkçi
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 max-w-[90vw] rounded-lg border border-gray-200 bg-white shadow-xl flex flex-col h-96">
-      <div className="flex items-center justify-between border-b p-4">
-        <h3 className="font-semibold text-gray-900">AI Köməkçi</h3>
+    <div className="glass fixed bottom-6 right-6 z-50 flex h-[30rem] w-96 max-w-[92vw] flex-col overflow-hidden rounded-3xl">
+      <div className="bg-brand flex items-center justify-between px-5 py-4 text-white">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
+          <div>
+            <p className="text-sm font-extrabold leading-none">Gemini AI</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/70">
+              əməliyyat köməkçisi
+            </p>
+          </div>
+        </div>
         <button
           onClick={() => setOpen(false)}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-white/80 hover:text-white"
         >
-          ✕
+          <X className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 text-sm mt-4">
-            Sual soruşun...
-          </div>
+          <p className="mt-6 text-center text-sm text-[var(--ink-soft)]">
+            Soruş: “Bu gün ən riskli məhsul hansıdır?”
+          </p>
         )}
-        {messages.map((msg, idx) => (
+        {messages.map((m, i) => (
           <div
-            key={idx}
-            className={`flex ${
-              msg.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            key={i}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-xs rounded-lg px-3 py-2 text-sm ${
-                msg.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-900"
+              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+                m.role === "user"
+                  ? "bg-brand text-white"
+                  : "bg-white/80 text-[var(--ink)] shadow-sm"
               }`}
             >
-              {msg.content}
+              {m.content || (loading ? "…" : "")}
             </div>
           </div>
         ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-500">
-              Düşünülür...
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
+        {loading && <div className="animate-shimmer h-8 w-32 rounded-full" />}
+        <div ref={endRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
+      <form onSubmit={handleSubmit} className="flex gap-2 p-3">
         <input
-          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Soru yazın..."
+          placeholder="Sual yaz…"
           disabled={loading}
-          className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
+          className="flex-1 rounded-xl border border-violet-200 bg-white/70 px-4 py-2.5 text-sm outline-none focus:border-violet-400"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+          className="btn-grad grid place-items-center px-4"
         >
-          Göndər
+          <Send className="h-4 w-4" />
         </button>
       </form>
     </div>

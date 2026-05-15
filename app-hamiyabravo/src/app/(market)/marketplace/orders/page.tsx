@@ -1,108 +1,152 @@
-import { getBuyerOrders } from "@/server/services/market";
+import { getBuyerBids, getBuyerOrders } from "@/server/services/market";
 import { requireRole } from "@/lib/session";
 import { formatAzn } from "@/lib/money";
+import { GlassCard, Pill, SectionTitle } from "@/components/ui/kit";
 
 export default async function OrdersPage() {
   const user = await requireRole("BUSINESS_BUYER", "HQ_ADMIN");
 
   if (!user.companyId) {
-    return <div className="text-center py-8 text-slate-500">Şirkət seçilməyib</div>;
+    return (
+      <GlassCard className="p-12 text-center">
+        <p className="text-sm text-slate-600">Şirkət seçilməyib</p>
+      </GlassCard>
+    );
   }
 
-  const orders = await getBuyerOrders(user.companyId);
+  const [bids, orders] = await Promise.all([
+    getBuyerBids(user.companyId),
+    getBuyerOrders(user.companyId),
+  ]);
 
-  const categories = Array.from(
-    new Set(orders.map((o) => o.productTitle))
-  ).slice(0, 5);
+  const bidStatusMap = {
+    LEADING: { tone: "ok", label: "Lider" },
+    OUTBID: { tone: "bad", label: "Üstələnib" },
+    WON: { tone: "ok", label: "Qazandı" },
+    LOST: { tone: "bad", label: "İtirdi" },
+  } as const;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">
-          Sifarişlər
-        </h1>
+    <div className="space-y-10 pb-12">
+      {bids.length > 0 && (
+        <div className="space-y-6">
+          <SectionTitle
+            kicker="CANLI HƏRRAC"
+            title="Mənim Təkliflərim"
+            className="px-1"
+          />
 
-        {orders.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            Hələ sifariş yoxdur
-          </div>
-        ) : (
-          <div className="overflow-x-auto border border-slate-200 rounded-lg">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr className="border-b border-slate-200">
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">
-                    Məhsul
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">
-                    Miqdar
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">
-                    Cəmi
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">
-                    Kod
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">
-                    Status
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-slate-700">
-                    Qaldırış
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id} className="border-b border-slate-200 hover:bg-slate-50">
-                    <td className="px-4 py-2 font-medium text-slate-900">
-                      {order.productTitle}
-                    </td>
-                    <td className="px-4 py-2 text-slate-700">{order.quantity}</td>
-                    <td className="px-4 py-2 text-slate-700">
-                      {formatAzn(order.totalAmount)}
-                    </td>
-                    <td className="px-4 py-2 font-mono font-semibold text-blue-600">
-                      {order.pickupCode}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span
-                        className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-                          order.status === "RESERVED"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {order.status === "RESERVED" ? "Gözləmə" : "Qaldırıldı"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-xs text-slate-500">
-                      {order.pickupStart.toLocaleDateString("az")} —{" "}
-                      {order.pickupEnd.toLocaleDateString("az")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {categories.length > 0 && (
-        <div className="rounded-lg bg-blue-50 border border-blue-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-3">
-            Tövsiyə olunan kateqoriyalar
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <span
-                key={cat}
-                className="inline-block px-3 py-1 text-xs bg-white border border-blue-200 rounded-full text-slate-700"
-              >
-                {cat}
-              </span>
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {bids.map((bid) => (
+              <GlassCard key={bid.id} className="p-5">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {bid.listingTitle}
+                    </h3>
+                    <p className="text-xs text-[var(--ink-soft)] mt-1">
+                      {bid.quantity} ədəd × {formatAzn(bid.pricePerUnit)}/ədəd
+                    </p>
+                  </div>
+                  <Pill tone={bidStatusMap[bid.status].tone}>
+                    {bidStatusMap[bid.status].label}
+                  </Pill>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <p className="text-xs text-[var(--ink-soft)] mb-1">Cəmi məbləğ</p>
+                  <p className="text-lg font-black text-slate-900">
+                    {formatAzn(bid.total)}
+                  </p>
+                </div>
+              </GlassCard>
             ))}
           </div>
         </div>
+      )}
+
+      {orders.length > 0 && (
+        <div className="space-y-6">
+          <SectionTitle
+            kicker="TAMAMLANMIŞ"
+            title="Qaldırış Kodlarım"
+            className="px-1"
+          />
+
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <GlassCard key={order.id} className="p-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
+                      Məhsul
+                    </p>
+                    <p className="text-sm font-bold text-slate-900">
+                      {order.productTitle}
+                    </p>
+                    <p className="text-xs text-[var(--ink-soft)] mt-2">
+                      {order.quantity} ədəd × {formatAzn(Math.round(order.totalAmount / order.quantity))}/ədəd
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
+                      Qaldırış Kodu
+                    </p>
+                    <div
+                      className="bg-brand text-white px-4 py-3 rounded-lg font-mono font-black text-xl text-center"
+                      data-testid="pickup-code"
+                    >
+                      {order.pickupCode}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
+                      Cəmi Məbləğ
+                    </p>
+                    <p className="text-xl font-black text-slate-900">
+                      {formatAzn(order.totalAmount)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
+                      Qaldırış Pəncərəsi
+                    </p>
+                    <p className="text-sm text-slate-900 font-semibold">
+                      {order.pickupStart.toLocaleDateString("az")} —{" "}
+                      {order.pickupEnd.toLocaleDateString("az")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <Pill
+                    tone={
+                      order.status === "RESERVED"
+                        ? "amber"
+                        : order.status === "PICKED_UP"
+                          ? "ok"
+                          : "bad"
+                    }
+                  >
+                    {order.status === "RESERVED"
+                      ? "Qaldırış Gözləmədə"
+                      : order.status === "PICKED_UP"
+                        ? "Qaldırıldı"
+                        : "Ləğv Edilib"}
+                  </Pill>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {bids.length === 0 && orders.length === 0 && (
+        <GlassCard className="p-12 text-center">
+          <p className="text-sm text-slate-600">Hələ təklif və ya sifariş yoxdur</p>
+        </GlassCard>
       )}
     </div>
   );

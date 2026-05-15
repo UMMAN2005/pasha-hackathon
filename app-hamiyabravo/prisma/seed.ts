@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { prisma } from "@/lib/db";
 import { getToday } from "@/lib/clock";
 import { recalcRiskService } from "@/server/services/recalc";
+import { createListingFromRecommendation } from "@/server/services/listing";
 
 const NAMESPACE = "bravo-hamiya-mvp";
 
@@ -226,6 +227,7 @@ export async function seedDatabase() {
   const today = getToday();
   const data = buildSeedData();
 
+  await prisma.bid.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.marketplaceListing.deleteMany({});
   await prisma.recommendation.deleteMany({});
@@ -319,6 +321,63 @@ export async function seedDatabase() {
 
   await recalcRiskService({ all: true });
   console.log("Recalc completed: RiskScore and Recommendation rows created");
+
+  await seedLiveAuctions();
+  console.log("Demo auctions + live bids seeded");
+}
+
+// Pre-open a couple of auctions with bids so the marketplace looks alive.
+async function seedLiveAuctions() {
+  const buyers = [
+    { id: uuidv5("company-astoria"), name: "Astoria Hotel" },
+    { id: uuidv5("company-nar"), name: "Restoran Nar & Qrill" },
+    { id: uuidv5("company-merkez"), name: "Kafe Mərkəz" },
+  ];
+
+  // Approve the two hottest recommendations into live listings.
+  for (const sku of ["DARY-YOG-500", "MEAT-CHK-1000"]) {
+    const rec = await prisma.recommendation.findFirst({
+      where: {
+        status: "PENDING",
+        batch: { product: { sku } },
+      },
+    });
+    if (!rec) continue;
+    const listing = await createListingFromRecommendation(rec.id, {
+      id: "seed",
+      name: "Seed",
+    });
+
+    // A small ladder of bids: last one is LEADING (highest).
+    const base = Math.round(listing.price * 0.82);
+    const step = Math.max(40, Math.round(listing.price * 0.05));
+    const ladder =
+      sku === "DARY-YOG-500"
+        ? [
+            { buyer: buyers[2], price: base, qty: 30 },
+            { buyer: buyers[1], price: base + step, qty: 40 },
+            { buyer: buyers[0], price: base + step * 2, qty: 50 },
+          ]
+        : [
+            { buyer: buyers[1], price: base, qty: 12 },
+            { buyer: buyers[0], price: base + step, qty: 20 },
+          ];
+
+    for (let i = 0; i < ladder.length; i++) {
+      const b = ladder[i];
+      const leading = i === ladder.length - 1;
+      await prisma.bid.create({
+        data: {
+          listingId: listing.id,
+          buyerCompanyId: b.buyer.id,
+          buyerName: b.buyer.name,
+          pricePerUnit: b.price,
+          quantity: b.qty,
+          status: leading ? "LEADING" : "OUTBID",
+        },
+      });
+    }
+  }
 }
 
 const isDirectRun = process.argv[1] === fileURLToPath(import.meta.url);

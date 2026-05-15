@@ -31,6 +31,7 @@ model Company {
   reliabilityScore   Int      @default(100) // 0-100, PRD §6 Buyer Reliability
   users              User[]
   orders             Order[]
+  bids               Bid[]
   createdAt          DateTime @default(now())
 }
 
@@ -147,9 +148,24 @@ model MarketplaceListing {
   maxQty           Int
   pickupStart      DateTime
   pickupEnd        DateTime
-  status           String          @default("ACTIVE") // ListingStatus
+  status           String          @default("ACTIVE") // ListingStatus | AUCTION
+  winningBidId     String?
   orders           Order[]
+  bids             Bid[]
   createdAt        DateTime        @default(now())
+}
+
+model Bid {
+  id             String             @id @default(uuid())
+  listingId      String
+  listing        MarketplaceListing @relation(fields: [listingId], references: [id])
+  buyerCompanyId String
+  buyerCompany   Company            @relation(fields: [buyerCompanyId], references: [id])
+  buyerName      String
+  pricePerUnit   Int // qəpik offered per unit
+  quantity       Int
+  status         String             @default("LEADING") // LEADING | OUTBID | WON | LOST
+  createdAt      DateTime           @default(now())
 }
 
 model Order {

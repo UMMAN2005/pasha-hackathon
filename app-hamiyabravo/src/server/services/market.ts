@@ -25,6 +25,16 @@ export interface PublicOrder {
   pickupEnd: Date;
 }
 
+export interface BuyerBid {
+  id: string;
+  listingTitle: string;
+  pricePerUnit: number;
+  quantity: number;
+  total: number;
+  status: "LEADING" | "OUTBID" | "WON" | "LOST";
+  createdAt: Date;
+}
+
 export async function getPublicListings(): Promise<PublicListing[]> {
   const listings = await prisma.marketplaceListing.findMany({
     where: { status: { in: ["ACTIVE", "RESERVED"] } },
@@ -128,6 +138,37 @@ export async function getPublicListing(id: string): Promise<PublicListing> {
     branchCity: listing.batch.branch.city,
     urgent: listing.discountPercent >= 45,
   };
+}
+
+export async function getBuyerBids(
+  companyId: string
+): Promise<BuyerBid[]> {
+  const bids = await prisma.bid.findMany({
+    where: { buyerCompanyId: companyId },
+    select: {
+      id: true,
+      pricePerUnit: true,
+      quantity: true,
+      status: true,
+      createdAt: true,
+      listing: {
+        select: {
+          publicTitle: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return bids.map((b) => ({
+    id: b.id,
+    listingTitle: b.listing.publicTitle,
+    pricePerUnit: b.pricePerUnit,
+    quantity: b.quantity,
+    total: b.pricePerUnit * b.quantity,
+    status: b.status as "LEADING" | "OUTBID" | "WON" | "LOST",
+    createdAt: b.createdAt,
+  }));
 }
 
 export async function getBuyerOrders(

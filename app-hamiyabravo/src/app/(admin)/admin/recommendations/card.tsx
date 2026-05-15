@@ -36,22 +36,22 @@ export function RecommendationCard({ recId }: RecommendationCardProps) {
   };
 
   return (
-    <div className="space-y-3">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <div className="space-y-3 h-full flex flex-col justify-end">
+      {error && <p className="text-sm text-rose-400">{error}</p>}
       <div className="flex gap-2">
         <button
           onClick={handleApprove}
           disabled={loading}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-400 transition-colors"
+          className="flex-1 btn-grad text-white font-bold py-2 rounded-lg hover:scale-105 transition-transform disabled:opacity-50"
         >
-          {loading ? "Hazırlanan..." : "Təsdiqlə"}
+          {loading ? "⋯" : "✦ Təsdiqlə"}
         </button>
         <button
           onClick={handleReject}
           disabled={loading}
-          className="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 disabled:bg-slate-400 transition-colors"
+          className="flex-1 px-4 py-2 border-2 border-white/20 text-white font-semibold rounded-lg hover:border-white/40 hover:bg-white/5 disabled:opacity-50 transition-all"
         >
-          {loading ? "..." : "Rədd et"}
+          {loading ? "⋯" : "Rədd et"}
         </button>
       </div>
     </div>

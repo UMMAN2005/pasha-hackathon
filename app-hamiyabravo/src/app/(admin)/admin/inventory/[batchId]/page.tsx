@@ -3,6 +3,9 @@ import { RiskBadge } from "@/components/risk-badge";
 import { formatAzn } from "@/lib/money";
 import { BatchDetailClient } from "./client";
 import { SalesChart } from "./sales-chart";
+import { productImage } from "@/lib/product-images";
+import { GlassCard, ProductThumb, Pill } from "@/components/ui/kit";
+import { forecastNarrative } from "@/server/ai/insights";
 
 interface DetailPageProps {
   params: Promise<{ batchId: string }>;
@@ -24,77 +27,134 @@ export default async function BatchDetailPage(props: DetailPageProps) {
     qty,
   }));
 
+  let aiNarrative = null;
+  try {
+    aiNarrative = await forecastNarrative({
+      product: batch.product,
+      riskScore: batch.riskScore,
+      daysToExpiry: batch.daysToExpiry,
+      qty: batch.quantity,
+      avgDailySales: batch.avgDailySales,
+      action: "RESEARCH_MARKET"
+    });
+  } catch {
+    aiNarrative = null;
+  }
+
   return (
     <div className="p-8 space-y-8">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 border border-slate-200">
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+      {/* Hero Header with Photo */}
+      <GlassCard className="p-8 border border-white/10" rise>
+        <div className="grid grid-cols-4 gap-6">
+          {/* Photo */}
+          <div className="col-span-1">
+            <div className="aspect-square rounded-xl overflow-hidden border border-white/20 ring-2 ring-white/10">
+              <ProductThumb
+                src={productImage(batch.product)}
+                alt={batch.product}
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+
+          {/* Title & Location */}
+          <div className="col-span-2 space-y-3">
+            <h1 className="text-4xl font-black bg-gradient-to-r from-orange-300 via-pink-300 to-violet-300 bg-clip-text text-transparent">
               {batch.product}
             </h1>
-            <p className="text-slate-600">{batch.branch}</p>
-          </div>
-          <div className="text-right space-y-2">
-            <div className="text-4xl font-bold text-slate-900">
-              {batch.quantity}
-            </div>
-            <p className="text-sm text-slate-600">{batch.daysToExpiry} gün</p>
-            <div className="text-sm text-slate-600">
-              Vəziyyət:{" "}
-              <span className="font-semibold">
+            <p className="text-violet-200">📍 {batch.branch}</p>
+            <div className="flex gap-2 mt-3">
+              <Pill tone={
+                batch.conditionStatus === "GOOD" ? "ok" :
+                batch.conditionStatus === "CHECK_REQUIRED" ? "amber" : "bad"
+              }>
                 {batch.conditionStatus === "GOOD"
-                  ? "Yaxşı"
+                  ? "✓ Yaxşı"
                   : batch.conditionStatus === "CHECK_REQUIRED"
-                    ? "Yoxlanılmalı"
-                    : "Təhlükəli"}
-              </span>
+                    ? "⚠ Yoxlanılmalı"
+                    : "✕ Təhlükəli"}
+              </Pill>
+            </div>
+          </div>
+
+          {/* Big Numbers */}
+          <div className="col-span-1 space-y-4">
+            <div>
+              <p className="text-xs text-violet-400 uppercase tracking-widest">Miqdar</p>
+              <p className="text-4xl font-black text-white">
+                {batch.quantity}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-violet-400 uppercase tracking-widest">Müddət</p>
+              <p className="text-3xl font-black text-violet-200">
+                {batch.daysToExpiry}
+              </p>
+              <p className="text-xs text-violet-300">gün</p>
             </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
-      {/* Sales Sparkline */}
-      <div className="bg-white rounded-xl p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">
-          Satış Meyli (14 gün)
+      {/* Sales Chart */}
+      <GlassCard className="p-6 border border-emerald-200/20" rise>
+        <h2 className="text-lg font-bold text-white mb-4">
+          📊 Satış Meyli (14 gün)
         </h2>
         <SalesChart data={chartData} />
-        <p className="text-sm text-slate-600 mt-4">
-          Orta gündəlik satış: <span className="font-semibold">{batch.avgDailySales}</span>
+        <p className="text-sm text-violet-200 mt-4">
+          Orta gündəlik: <span className="font-bold">{batch.avgDailySales}</span> ədəd
         </p>
-      </div>
+      </GlassCard>
 
       {/* Risk Panel */}
-      <div className="bg-white rounded-xl p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Risk</h2>
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div>
-            <p className="text-sm text-slate-600 mb-1">Risk sürətləndirici</p>
-            <div className="flex items-center gap-2">
-              <div className="text-3xl font-bold text-slate-900">
+      <GlassCard className="p-6 border border-rose-200/20" rise>
+        <h2 className="text-lg font-bold text-white mb-6">
+          ⚡ Risk Analizi
+        </h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <p className="text-xs text-violet-400 uppercase tracking-widest">Risk Sürətləndirici</p>
+            <div className="flex items-center gap-3">
+              <div className="text-4xl font-black bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
                 {batch.riskScore}
               </div>
               <RiskBadge score={batch.riskScore} />
             </div>
           </div>
-          <div>
-            <p className="text-sm text-slate-600 mb-1">Gözlənilən əlində</p>
-            <p className="text-2xl font-bold text-slate-900">
+          <div className="space-y-2">
+            <p className="text-xs text-violet-400 uppercase tracking-widest">Gözlənilən Satılmayan</p>
+            <p className="text-3xl font-bold text-white">
               {batch.expectedUnsoldQty}
             </p>
           </div>
-          <div>
-            <p className="text-sm text-slate-600 mb-1">Gözlənilən itki</p>
-            <p className="text-2xl font-bold text-red-600">
+          <div className="space-y-2">
+            <p className="text-xs text-violet-400 uppercase tracking-widest">İtki Riski</p>
+            <p className="text-2xl font-bold bg-gradient-to-r from-rose-300 to-pink-300 bg-clip-text text-transparent">
               {formatAzn(batch.expectedLoss)}
             </p>
           </div>
         </div>
-        <p className="text-sm text-slate-600">
-          İnam: <span className="font-semibold">{confidenceWords}</span>
-        </p>
-      </div>
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <p className="text-sm text-violet-200">
+            İnam: <span className="font-bold">{confidenceWords}</span>
+          </p>
+        </div>
+      </GlassCard>
+
+      {/* AI Forecast */}
+      {aiNarrative && (
+        <GlassCard className="p-6 border border-violet-200/20" rise>
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+              ✦ AI Proqnozu
+            </h3>
+            <p className="text-violet-100 leading-relaxed">
+              {aiNarrative}
+            </p>
+          </div>
+        </GlassCard>
+      )}
 
       {/* Explanation */}
       {batch.recommendation && (
@@ -111,27 +171,27 @@ export default async function BatchDetailPage(props: DetailPageProps) {
 
       {/* Action History */}
       {batch.auditLogs.length > 0 && (
-        <div className="bg-white rounded-xl p-6 border border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Fəaliyyət Tarixçəsi
+        <GlassCard className="p-6 border border-white/10" rise>
+          <h2 className="text-lg font-bold text-white mb-4">
+            📝 Fəaliyyət Tarixçəsi
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {batch.auditLogs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start justify-between border-b border-slate-100 pb-3"
+                className="flex items-start justify-between border-b border-white/10 pb-3 last:border-b-0"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{log.action}</p>
-                  <p className="text-xs text-slate-500">{log.actorName}</p>
+                  <p className="font-semibold text-white">{log.action}</p>
+                  <p className="text-xs text-violet-400">{log.actorName}</p>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-violet-300 whitespace-nowrap">
                   {new Date(log.createdAt).toLocaleString("az-AZ")}
                 </p>
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   );
