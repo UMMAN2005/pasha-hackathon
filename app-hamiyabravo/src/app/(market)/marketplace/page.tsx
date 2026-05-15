@@ -24,6 +24,7 @@ export default async function MarketplacePage() {
               key={listing.id}
               href={`/marketplace/${listing.id}`}
               className="block p-4 rounded-lg border border-slate-200 hover:border-blue-400 hover:shadow-md transition"
+              data-testid="listing-card"
             >
               <div className="flex justify-between items-start gap-2">
                 <div className="flex-1">

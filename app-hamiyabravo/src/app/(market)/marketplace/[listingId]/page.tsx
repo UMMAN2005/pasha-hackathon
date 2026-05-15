@@ -57,7 +57,7 @@ export default function ListingPage({ params }: PageProps) {
           <p className="text-sm text-green-700 mb-4">
             Aşağıdakı kodunuz üçün baxın:
           </p>
-          <div className="text-4xl font-mono font-bold text-green-900 bg-white p-4 rounded border-2 border-green-300">
+          <div className="text-4xl font-mono font-bold text-green-900 bg-white p-4 rounded border-2 border-green-300" data-testid="pickup-code">
             {pickupCode}
           </div>
           <p className="text-xs text-green-600 mt-4 mb-6">

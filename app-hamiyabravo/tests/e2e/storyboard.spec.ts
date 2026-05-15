@@ -1,91 +1,79 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Admin 60-second storyboard loop (offline-safe)", () => {
-  test("showcases hero, status, impact, risk, and chatbot", async ({
+test.describe("60-second money loop: predict → approve → reserve → pickup → impact", () => {
+  test("full cycle — Kamran approves, Astoria reserves, Kamran confirms pickup, impact shown", async ({
     page,
   }) => {
-    // Ensure offline mode for demo safety
-    process.env.AI_ENABLED = "false";
 
-    // 1. Navigate to admin overview
+    // Step 1: /select-user → Kamran (Branch A manager)
+    await page.goto("/select-user");
+    await page.getByText("Kamran", { exact: true }).click();
+
+    // Step 2: On /admin, assert hero copy and landing
+    await expect(page.getByText("Bu gün bərpa olundu")).toBeVisible();
+
+    // Step 3: Click "AI növbəsinə bax" link → /admin/recommendations
+    await page.getByRole("link", { name: /AI növbəsinə bax/ }).click();
+    await page.waitForLoadState("domcontentloaded");
+
+    // Step 4: Click first "Təsdiqlə" button to approve the recommendation
+    await page.getByRole("button", { name: "Təsdiqlə" }).first().click();
+    await page.waitForLoadState("domcontentloaded");
+
+    // Step 5: Navigate to /select-user, select Astoria Hotel (buyer)
+    await page.goto("/select-user");
+    await page.getByText("Astoria Hotel", { exact: true }).click();
+
+    // Step 6: On /marketplace, open the first listing (Greek Yogurt 500g)
+    // The listing card has data-testid="listing-card"; find one and click it
+    const firstListing = page.locator('[data-testid="listing-card"]').first();
+    await expect(firstListing).toBeVisible();
+    await firstListing.click();
+    await page.waitForLoadState("domcontentloaded");
+
+    // Step 7: Verify product title is "Greek Yogurt 500g" (the English name, not Azerbaijani)
+    await expect(page.getByRole("heading", { name: "Greek Yogurt 500g" })).toBeVisible();
+
+    // Step 8: Click "Sifariş et" (reserve) button
+    await page.getByRole("button", { name: "Sifariş et" }).click();
+    await page.waitForLoadState("domcontentloaded");
+
+    // Step 9: Capture the pickup code from data-testid="pickup-code"
+    const pickupCodeElement = page.locator('[data-testid="pickup-code"]');
+    await expect(pickupCodeElement).toBeVisible();
+    const pickupCode = await pickupCodeElement.textContent();
+    expect(pickupCode).toBeTruthy();
+    const code = pickupCode!.trim();
+
+    // Step 10: Return to /select-user, select Kamran again
+    await page.goto("/select-user");
+    await page.getByText("Kamran", { exact: true }).click();
+
+    // Step 11: Navigate to /admin/listings
+    await page.goto("/admin/listings");
+    await page.waitForLoadState("domcontentloaded");
+
+    // Step 12: Fill data-testid="pickup-input" with the code, click confirm button
+    await page.locator('[data-testid="pickup-input"]').fill(code);
+    await page.locator('[data-testid="pickup-submit"]').click();
+    await page.waitForLoadState("domcontentloaded");
+
+    // Step 13: Navigate back to /admin
     await page.goto("/admin");
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
 
-    // 2. Verify hero number displays (data-testid="hero-number")
+    // Step 14: Assert hero number is NOT "0 ₼" (money was recovered)
     const heroNumber = page.locator('[data-testid="hero-number"]');
     await expect(heroNumber).toBeVisible();
-    const heroText = await heroNumber.locator("text=/₼/").first();
-    await expect(heroText).toContainText("₼");
+    const heroText = await heroNumber.textContent();
+    expect(heroText).not.toContain("0 ₼");
 
-    // 3. Wait for status line (if a pickup event exists today)
-    const statusLine = page.locator(".bg-blue-50.border-blue-200");
-    const statusVisible = await statusLine.isVisible();
-    if (statusVisible) {
-      await expect(statusLine).toBeVisible();
-    }
+    // Step 15: Assert impact strip is visible (CO₂, food saved metrics)
+    const impactElements = page.locator('[class*="rounded-xl"][class*="border-slate-200"]');
+    // The impact strip has 4 cards (Öğün, Kiloqram, CO₂, Boşa gedir); at least some should be visible
+    const impactCount = await impactElements.count();
+    expect(impactCount).toBeGreaterThan(0);
 
-    // 4. Verify impact strip is rendered
-    const impactStrip = page.locator("[class*='bg-green']").first();
-    await expect(impactStrip).toBeVisible();
-
-    // 5. Verify risk section heading
-    const riskHeading = page.locator(
-      "h2:has-text('5 məhsul tezliklə xarab ola bilər')"
-    );
-    await expect(riskHeading).toBeVisible();
-
-    // 6. Open AI chatbot (button in topbar)
-    const chatButton = page.locator("button:has-text('AI köməkçi')");
-    await expect(chatButton).toBeVisible();
-    await chatButton.click();
-
-    // 7. Wait for chat panel to open
-    await page.waitForTimeout(500);
-    const chatPanel = page.locator("[class*='fixed'][class*='right']").first();
-    await expect(chatPanel).toBeVisible();
-
-    // 8. Send a test message to chat
-    const inputField = chatPanel.locator("input, textarea").first();
-    if (await inputField.isVisible()) {
-      await inputField.fill("Riskdə olan məhsullar nələrdir?");
-      const sendButton = chatPanel.locator("button:has-text('Göndər')").first();
-      if (await sendButton.isVisible()) {
-        await sendButton.click();
-      } else {
-        // Fallback: press Enter
-        await inputField.press("Enter");
-      }
-
-      // 9. Wait for response (with AI_ENABLED=false, should get offline fallback)
-      await page.waitForTimeout(1000);
-      const offlineMessage = chatPanel.locator(
-        "text=/AI köməkçi hazırda oflayndır/"
-      );
-      const assistantMessage = chatPanel.locator("[class*='bg-gray']");
-
-      const gotResponse =
-        (await offlineMessage.isVisible()) ||
-        (await assistantMessage.count()) > 0;
-      expect(gotResponse).toBe(true);
-    }
-
-    // 10. Close chat
-    const closeButton = chatPanel.locator("button").first();
-    if (await closeButton.isVisible()) {
-      await closeButton.click();
-    }
-
-    // 11. Verify all main page elements are visible
-    await expect(heroNumber).toBeVisible();
-    await expect(riskHeading).toBeVisible();
-
-    // 12. Scroll and verify branch leaderboard (if present)
-    const leaderboardHeading = page.locator("h3:has-text('Şubələr')");
-    const leaderboardVisible = await leaderboardHeading.isVisible();
-    if (leaderboardVisible) {
-      await expect(leaderboardHeading).toBeVisible();
-    }
-
-    // Test passes: 60-second loop scenario complete
+    // Test passes: full 60-second loop complete
   });
 });
