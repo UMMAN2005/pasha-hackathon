@@ -2,6 +2,7 @@ import { getKpisService } from "@/server/services/kpis";
 import { HeroNumber } from "@/components/hero-number";
 import { ImpactStrip } from "@/components/impact-strip";
 import { RiskListMini } from "@/components/risk-list-mini";
+import { StatusLine } from "@/components/status-line";
 import Link from "next/link";
 
 export default async function AdminOverviewPage() {
@@ -13,7 +14,11 @@ export default async function AdminOverviewPage() {
       <HeroNumber
         qapik={kpis.moneyRecoveredToday}
         label="Bu gün bərpa olundu"
+        data-testid="hero-number"
       />
+
+      {/* Status Line */}
+      <StatusLine />
 
       {/* Impact Strip */}
       <ImpactStrip impact={kpis.recoveryImpact} />

@@ -10,6 +10,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useState } from "react";
+import { AiChat } from "./ai-chat";
 
 interface AppShellProps {
   surface: "admin" | "marketplace";
@@ -107,6 +108,9 @@ export function AppShell({ surface, children, userName, userRole }: AppShellProp
         {/* Page content */}
         <div className="flex-1 overflow-auto p-8">{children}</div>
       </main>
+
+      {/* AI Chat — admin only */}
+      {surface === "admin" && <AiChat />}
     </div>
   );
 }

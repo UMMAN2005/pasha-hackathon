@@ -4,11 +4,12 @@ interface HeroNumberProps {
   qapik: number;
   label: string;
   progress?: { current: number; target: number };
+  "data-testid"?: string;
 }
 
-export function HeroNumber({ qapik, label, progress }: HeroNumberProps) {
+export function HeroNumber({ qapik, label, progress, ...props }: HeroNumberProps) {
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-12 text-center">
+    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-12 text-center" {...props}>
       <p className="text-sm font-medium text-slate-600 mb-2">{label}</p>
       <div className="text-5xl font-bold text-blue-900 mb-6">
         {formatAzn(qapik)}
