@@ -44,3 +44,7 @@ next-env.d.ts
 # prisma sqlite (demo datastore)
 prisma/*.db
 prisma/*.db-journal
+
+# playwright artifacts
+test-results/
+playwright-report/
