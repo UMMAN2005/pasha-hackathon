@@ -96,13 +96,15 @@ export function AppShell({ surface, children, userName, userRole }: AppShellProp
             )}
           </div>
 
-          <button
-            onClick={() => setChatOpen(!chatOpen)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-900 transition-colors"
-          >
-            <MessageSquare className="w-5 h-5" />
-            <span className="text-sm font-medium">AI köməkçi</span>
-          </button>
+          {surface === "admin" && (
+            <button
+              onClick={() => setChatOpen(!chatOpen)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-900 transition-colors"
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span className="text-sm font-medium">AI köməkçi</span>
+            </button>
+          )}
         </header>
 
         {/* Page content */}
