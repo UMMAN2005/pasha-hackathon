@@ -11,3 +11,17 @@ export class NotFoundError extends Error {
     this.name = "NotFoundError";
   }
 }
+
+export class InsufficientStockError extends Error {
+  constructor(message: string = "Insufficient stock") {
+    super(message);
+    this.name = "InsufficientStockError";
+  }
+}
+
+export class InvalidQuantityError extends Error {
+  constructor(message: string = "Invalid quantity") {
+    super(message);
+    this.name = "InvalidQuantityError";
+  }
+}
