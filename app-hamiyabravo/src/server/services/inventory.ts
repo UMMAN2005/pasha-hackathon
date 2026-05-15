@@ -26,14 +26,9 @@ export async function listBatches(filters: ListBatchesFilter) {
         take: 1,
       },
     },
-    orderBy: {
-      riskScores: {
-        _max: {
-          riskScore: "desc",
-        },
-      },
-    },
   });
+
+  batches.sort((a, b) => (b.riskScores[0]?.riskScore ?? 0) - (a.riskScores[0]?.riskScore ?? 0));
 
   return batches.map((b) => ({
     id: b.id,
