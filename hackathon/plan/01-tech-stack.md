@@ -15,8 +15,8 @@ Maps PRD §16 (Recommended Technical Stack) onto the locked "single Next.js full
 | Components | shadcn/ui (Radix primitives) | latest | Accessible, unstyled-then-themed; fast polished UI |
 | Icons | lucide-react | latest | Consistent line icons |
 | Charts | Recharts | 2.x | Sparkline/trend on Overview & Product Detail |
-| ORM | Prisma | 6.x | PRD §16 PostgreSQL; typed queries, migrations, transactions |
-| Database | PostgreSQL (Docker) | 16 | PRD §16; transactional reservations (no overselling, §15) |
+| ORM | Prisma | 6.19 | Typed queries, transactions; provider-portable (sqlite ↔ postgresql) |
+| Database | **SQLite** (demo, `file:./dev.db`); Postgres-portable | — | Zero infra / offline / any laptop. Interactive transactions still enforce no-overselling (§15). Prod swap → Postgres (see `02-data-model.md`). |
 | Session/Auth | iron-session (encrypted cookie) | 8.x | PRD §22 "mock authentication with role-based demo users first" |
 | Validation | Zod | 3.x | PRD §15 input validation at boundaries |
 | AI SDK | `ai` (Vercel AI SDK) + `@ai-sdk/anthropic` | latest | Streaming Claude chatbot/narration |
@@ -37,7 +37,7 @@ Maps PRD §16 (Recommended Technical Stack) onto the locked "single Next.js full
 ## Environment variables (`.env`, `.env.example` committed)
 
 ```
-DATABASE_URL="postgresql://bravo:bravo@localhost:5432/bravo?schema=public"
+DATABASE_URL="file:./dev.db"   # demo SQLite; prod: postgresql://… (see 02-data-model.md)
 SESSION_PASSWORD="dev-only-change-me-32-chars-minimum-string"
 ANTHROPIC_API_KEY=""                # optional; empty => AI falls back to deterministic text
 ANTHROPIC_MODEL="claude-sonnet-4-6"
@@ -52,7 +52,7 @@ NEXT_PUBLIC_APP_NAME="HamıyaBravo"
 
 ```
 /                      (Next.js app root = hackathon/app or repo root — see 06 Task 1)
-  docker-compose.yml        Postgres 16 service
+  docker-compose.yml        Postgres 16 service (prod-swap only; demo uses SQLite)
   .env.example
   prisma/
     schema.prisma           full model (see 02-data-model.md)
@@ -93,29 +93,27 @@ NEXT_PUBLIC_APP_NAME="HamıyaBravo"
 ## Commands (every command the engineer needs)
 
 ```bash
-# one-time
-pnpm install
-docker compose up -d                 # Postgres on :5432
+# one-time (npm — pnpm unavailable in build env; SQLite needs no Docker)
+npm install
 cp .env.example .env                 # then paste ANTHROPIC_API_KEY (optional)
-pnpm prisma migrate dev --name init  # create schema
-pnpm prisma db seed                  # load PRD §18 dataset deterministically
+npm run db:reset                     # prisma db push --force-reset + deterministic seed
 
 # develop
-pnpm dev                             # http://localhost:3000
+npm run dev                          # http://localhost:3000
 
 # quality gates
-pnpm test                            # vitest unit
-pnpm test:e2e                        # playwright storyboard
-pnpm lint && pnpm typecheck          # eslint + tsc --noEmit
+npm test                             # vitest unit
+npm run test:e2e                     # playwright storyboard
+npm run lint && npm run typecheck    # eslint + tsc --noEmit
 
-# reset demo to pristine (run before the pitch)
-pnpm db:reset                        # prisma migrate reset --force + seed
+# reset demo to pristine (run before the pitch — instant, no drift)
+npm run db:reset                     # prisma db push --force-reset && prisma db seed
 
 # offline rehearsal (prove AI fallback)
-AI_ENABLED=false pnpm dev
+AI_ENABLED=false npm run dev
 ```
 
-`package.json` scripts to define: `dev`, `build`, `start`, `test`, `test:e2e`, `lint`, `typecheck` (`tsc --noEmit`), `db:reset` (`prisma migrate reset --force && prisma db seed`), `prisma.seed` → `tsx prisma/seed.ts`.
+`package.json` scripts: `dev`, `build`, `start`, `test`, `test:e2e`, `lint`, `typecheck` (`tsc --noEmit`), `db:push` (`prisma db push --skip-generate`), `db:reset` (`prisma db push --force-reset && prisma db seed`), `prisma.seed` → `tsx prisma/seed.ts`.
 
 ## Vercel-ready (don't deploy by default; keep it possible)
 

@@ -1,84 +1,42 @@
+// Demo datastore: SQLite (zero-infra, no server/Docker/root — runs on any laptop).
+// Postgres parity preserved: enum *values* unchanged, columns are String + app-level
+// Zod validation (domain layer already uses TS string unions). Production swap path
+// documented in hackathon/plan/02-data-model.md (provider=postgresql + _postgres-migration).
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  HQ_ADMIN
-  BRANCH_MANAGER
-  WAREHOUSE_MANAGER
-  FINANCE_ANALYST
-  BUSINESS_BUYER
-  LOGISTICS_OPERATOR
-}
-
-enum CompanyType {
-  BRAVO
-  BUYER
-}
-
-enum VerificationStatus {
-  PENDING
-  VERIFIED
-  REJECTED
-}
-
-enum ConditionStatus {
-  GOOD
-  CHECK_REQUIRED
-  UNSAFE
-}
-
-enum ActionType {
-  KEEP
-  IN_STORE_DISCOUNT
-  TRANSFER
-  LIST_B2B
-  BUNDLE
-  DONATE
-  SUPPLIER_RETURN
-  DISPOSE
-}
-
-enum RecStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  EXECUTED
-}
-
-enum ListingStatus {
-  ACTIVE
-  RESERVED
-  SOLD
-  UNPUBLISHED
-}
-
-enum OrderStatus {
-  RESERVED
-  PICKED_UP
-  CANCELLED
-}
+// Enum value contracts (validated in app via Zod; not DB-enforced on SQLite):
+//   Role:               HQ_ADMIN | BRANCH_MANAGER | WAREHOUSE_MANAGER | FINANCE_ANALYST | BUSINESS_BUYER | LOGISTICS_OPERATOR
+//   CompanyType:        BRAVO | BUYER
+//   VerificationStatus: PENDING | VERIFIED | REJECTED
+//   ConditionStatus:    GOOD | CHECK_REQUIRED | UNSAFE
+//   ActionType:         KEEP | IN_STORE_DISCOUNT | TRANSFER | LIST_B2B | BUNDLE | DONATE | SUPPLIER_RETURN | DISPOSE
+//   RecStatus:          PENDING | APPROVED | REJECTED | EXECUTED
+//   ListingStatus:      ACTIVE | RESERVED | SOLD | UNPUBLISHED
+//   OrderStatus:        RESERVED | PICKED_UP | CANCELLED
 
 model Company {
-  id                 String             @id @default(uuid())
-  type               CompanyType
+  id                 String   @id @default(uuid())
+  type               String // CompanyType
   legalName          String
   taxId              String?
-  verificationStatus VerificationStatus @default(VERIFIED)
-  reliabilityScore   Int                @default(100) // 0-100, PRD §6 Buyer Reliability
+  verificationStatus String   @default("VERIFIED") // VerificationStatus
+  reliabilityScore   Int      @default(100) // 0-100, PRD §6 Buyer Reliability
   users              User[]
   orders             Order[]
-  createdAt          DateTime           @default(now())
+  createdAt          DateTime @default(now())
 }
 
 model User {
   id        String   @id @default(uuid())
-  role      Role
+  role      String // Role
   name      String
   email     String   @unique
   companyId String?
@@ -89,7 +47,7 @@ model User {
 }
 
 model Branch {
-  id        String          @id @default(uuid())
+  id        String           @id @default(uuid())
   name      String
   city      String
   latitude  Float?
@@ -99,40 +57,40 @@ model Branch {
 }
 
 model Category {
-  id                String    @id @default(uuid())
-  name              String    @unique
-  perishabilityLevel Int      // 1 (low) .. 5 (high) — drives urgency factor default
-  products          Product[]
+  id                 String    @id @default(uuid())
+  name               String    @unique
+  perishabilityLevel Int // 1 (low) .. 5 (high) — drives urgency factor default
+  products           Product[]
 }
 
 model Product {
-  id          String           @id @default(uuid())
-  sku         String           @unique
+  id          String             @id @default(uuid())
+  sku         String             @unique
   barcode     String?
   name        String
   brand       String?
   categoryId  String
-  category    Category         @relation(fields: [categoryId], references: [id])
+  category    Category           @relation(fields: [categoryId], references: [id])
   unitSize    String?
-  storageType String?          // ambient | chilled | frozen
-  isActive    Boolean          @default(true)
+  storageType String? // ambient | chilled | frozen
+  isActive    Boolean            @default(true)
   batches     InventoryBatch[]
   sales       SalesTransaction[]
 }
 
 model InventoryBatch {
-  id               String          @id @default(uuid())
+  id               String               @id @default(uuid())
   productId        String
-  product          Product         @relation(fields: [productId], references: [id])
+  product          Product              @relation(fields: [productId], references: [id])
   branchId         String
-  branch           Branch          @relation(fields: [branchId], references: [id])
+  branch           Branch               @relation(fields: [branchId], references: [id])
   lotNumber        String
-  expiryDate       DateTime        // date only (UTC midnight)
+  expiryDate       DateTime // date only (UTC midnight)
   quantityOnHand   Int
-  quantityReserved Int             @default(0)
-  costPerUnit      Int             // qəpik
-  retailPrice      Int             // qəpik
-  conditionStatus  ConditionStatus @default(GOOD)
+  quantityReserved Int                  @default(0)
+  costPerUnit      Int // qəpik
+  retailPrice      Int // qəpik
+  conditionStatus  String               @default("GOOD") // ConditionStatus
   lastStockCheckAt DateTime?
   riskScores       RiskScore[]
   recommendations  Recommendation[]
@@ -145,67 +103,67 @@ model SalesTransaction {
   product   Product  @relation(fields: [productId], references: [id])
   branchId  String
   quantity  Int
-  unitPrice Int      // qəpik
+  unitPrice Int // qəpik
   soldAt    DateTime
 }
 
 model RiskScore {
-  id                String   @id @default(uuid())
+  id                String         @id @default(uuid())
   batchId           String
   batch             InventoryBatch @relation(fields: [batchId], references: [id])
-  riskScore         Int      // 0-100
+  riskScore         Int // 0-100
   expectedUnsoldQty Int
-  expectedLoss      Int      // qəpik
-  confidence        Float    // 0..1
-  modelVersion      String   @default("rules-mvp-1")
-  generatedAt       DateTime @default(now())
+  expectedLoss      Int // qəpik
+  confidence        Float // 0..1
+  modelVersion      String         @default("rules-mvp-1")
+  generatedAt       DateTime       @default(now())
 }
 
 model Recommendation {
-  id               String     @id @default(uuid())
+  id               String              @id @default(uuid())
   batchId          String
-  batch            InventoryBatch @relation(fields: [batchId], references: [id])
-  actionType       ActionType
-  priority         Int        // 1 (highest) .. 5
-  reason           String     // deterministic human reason (Claude may enrich at view time)
-  expectedRecovery Int        // qəpik
-  status           RecStatus  @default(PENDING)
+  batch            InventoryBatch      @relation(fields: [batchId], references: [id])
+  actionType       String // ActionType
+  priority         Int // 1 (highest) .. 5
+  reason           String // deterministic human reason (Claude may enrich at view time)
+  expectedRecovery Int // qəpik
+  status           String              @default("PENDING") // RecStatus
   ownerId          String?
-  createdAt        DateTime   @default(now())
+  createdAt        DateTime            @default(now())
   resolvedAt       DateTime?
   listing          MarketplaceListing?
 }
 
 model MarketplaceListing {
-  id               String        @id @default(uuid())
+  id               String          @id @default(uuid())
   batchId          String
-  batch            InventoryBatch @relation(fields: [batchId], references: [id])
-  recommendationId String?       @unique
+  batch            InventoryBatch  @relation(fields: [batchId], references: [id])
+  recommendationId String?         @unique
   recommendation   Recommendation? @relation(fields: [recommendationId], references: [id])
   publicTitle      String
-  price            Int           // qəpik, discounted unit price (buyer-facing)
-  discountPercent  Int           // 0-100
-  minQty           Int           @default(1)
+  price            Int // qəpik, discounted unit price (buyer-facing)
+  discountPercent  Int // 0-100
+  minQty           Int             @default(1)
   maxQty           Int
   pickupStart      DateTime
   pickupEnd        DateTime
-  status           ListingStatus @default(ACTIVE)
+  status           String          @default("ACTIVE") // ListingStatus
   orders           Order[]
-  createdAt        DateTime      @default(now())
+  createdAt        DateTime        @default(now())
 }
 
 model Order {
-  id              String      @id @default(uuid())
-  listingId       String
-  listing         MarketplaceListing @relation(fields: [listingId], references: [id])
-  buyerCompanyId  String
-  buyerCompany    Company     @relation(fields: [buyerCompanyId], references: [id])
-  quantity        Int
-  totalAmount     Int         // qəpik
-  status          OrderStatus @default(RESERVED)
-  pickupCode      String      // 6-char human code, demo-friendly
-  createdAt       DateTime    @default(now())
-  pickedUpAt      DateTime?
+  id             String             @id @default(uuid())
+  listingId      String
+  listing        MarketplaceListing @relation(fields: [listingId], references: [id])
+  buyerCompanyId String
+  buyerCompany   Company            @relation(fields: [buyerCompanyId], references: [id])
+  quantity       Int
+  totalAmount    Int // qəpik
+  status         String             @default("RESERVED") // OrderStatus
+  pickupCode     String // 6-char human code, demo-friendly
+  createdAt      DateTime           @default(now())
+  pickedUpAt     DateTime?
 }
 
 model AuditLog {
@@ -215,6 +173,6 @@ model AuditLog {
   entityType String
   entityId   String
   action     String
-  metadata   Json?
+  metadata   String? // JSON-encoded (was Json on Postgres)
   createdAt  DateTime @default(now())
 }

@@ -2,7 +2,16 @@
 
 Implements PRD §8 (Data Architecture), §9 (Schema Draft), §18 (Demo Dataset). Batch-level inventory, not SKU-level (PRD §8: a product can have multiple expiry dates per branch).
 
-## Prisma schema — exact content for `prisma/schema.prisma`
+## Datastore: SQLite for demo, Postgres-portable
+
+> **Implemented decision (revised).** The demo runs on **SQLite** (`DATABASE_URL="file:./dev.db"`) via Prisma — zero infra, no server/Docker/root, runs on any laptop fully offline. Two mechanical deltas vs. the Postgres draft below, *nothing else changes*:
+> - **`provider = "sqlite"`** instead of `postgresql`.
+> - **8 `enum` blocks → `String` columns** (Prisma can't model native enums on SQLite). The enum *value contracts* are unchanged and are validated in-app via Zod; the domain layer already uses TS string unions, so `risk.ts`/`decision.ts`/services are untouched. `AuditLog.metadata Json?` → `String?` (JSON-encoded).
+> - Schema is created with `prisma db push` (no migration history needed for a demo); `npm run db:reset` = `prisma db push --force-reset && prisma db seed` (instant, judge-proof, no drift).
+>
+> **Production / live-URL swap path** (documented, reversible): set `provider = "postgresql"`, point `DATABASE_URL` at Neon/Supabase, restore the Postgres enums, and apply the archived migration in **`prisma/_postgres-migration/`** (the verbatim Postgres DDL written in Task 6) via `prisma migrate deploy`. The schema below is that Postgres reference.
+
+## Prisma schema — Postgres reference (demo uses the SQLite variant above)
 
 ```prisma
 generator client {
@@ -10,7 +19,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // demo: "sqlite"
   url      = env("DATABASE_URL")
 }
 

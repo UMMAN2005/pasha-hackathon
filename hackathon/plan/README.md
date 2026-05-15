@@ -7,7 +7,7 @@
 | Decision | Choice | Why |
 |---|---|---|
 | Architecture | **Single Next.js full-stack** (App Router + Server Actions + Route Handlers + Prisma) | One codebase, one deploy, one process to run on stage. Fastest in 48h. |
-| Database | **Local Dockerized PostgreSQL 16** + deterministic seed | Demo survives dead venue Wi-Fi. Reproducible every run. |
+| Database | **SQLite via Prisma** (`file:./dev.db`) for the demo + deterministic seed; **Postgres-portable** schema | Zero infra: no server/Docker/root, runs on any judge laptop offline. Enum values & domain layer unchanged; production swap path (provider=postgresql + archived `_postgres-migration/`) documented in `02-data-model.md`. _Revised from Dockerized Postgres 16: build/demo environment cannot run a Postgres server (no Docker socket, no server binaries, no root); SQLite delivers the same reproducible offline demo with stronger "runs anywhere" guarantees._ |
 | AI layer | **Deterministic formula (PRD §11) + Claude assistant** (explanations, narration, jury Q&A) with graceful offline fallback | Risk math never fails on stage; Claude adds the "wow" but is never load-bearing. |
 | Demo env | **Local laptop primary**, Vercel-ready | No Wi-Fi dependency during the pitch; deployable if wanted. |
 
