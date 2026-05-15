@@ -15,7 +15,7 @@
     "db:reset": "prisma db push --force-reset && prisma db seed"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",

@@ -29,6 +29,72 @@ type BatchData = {
   sales14: number[];
 };
 
+// Single source of truth for the PRD §18 product/batch dataset. Sales14 sums
+// are authoritative (185/101/1236/98/95) and the per-day series is spread so
+// avgFirst7≈avgLast7 → demandSlowdownFactor≈1.0 (reproduces §18 risk scores).
+const PRODUCT_SPECS = [
+  {
+    sku: "DARY-YOG-500",
+    name: "Greek Yogurt 500g",
+    categoryId: uuidv5("cat-dairy"),
+    branchId: uuidv5("branch-a"),
+    qty: 120,
+    expiry: new Date("2026-05-18T00:00:00.000Z"),
+    costPerUnit: 180,
+    retailPrice: 320,
+    condition: "GOOD" as const,
+    sales14: [14, 13, 13, 13, 14, 13, 13, 13, 13, 14, 13, 13, 13, 13],
+  },
+  {
+    sku: "MEAT-CHK-1000",
+    name: "Chicken Breast 1kg",
+    categoryId: uuidv5("cat-meat"),
+    branchId: uuidv5("branch-b"),
+    qty: 45,
+    expiry: new Date("2026-05-17T00:00:00.000Z"),
+    costPerUnit: 650,
+    retailPrice: 1190,
+    condition: "CHECK_REQUIRED" as const,
+    sales14: [8, 7, 7, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7, 7],
+  },
+  {
+    sku: "PROD-BAN-1000",
+    name: "Bananas (kg)",
+    categoryId: uuidv5("cat-produce"),
+    branchId: uuidv5("branch-c"),
+    qty: 230,
+    expiry: new Date("2026-05-16T00:00:00.000Z"),
+    costPerUnit: 90,
+    retailPrice: 210,
+    condition: "GOOD" as const,
+    sales14: [89, 88, 88, 89, 88, 88, 88, 89, 88, 88, 89, 88, 88, 88],
+  },
+  {
+    sku: "BAKE-CRS-6",
+    name: "Croissants Pack",
+    categoryId: uuidv5("cat-bakery"),
+    branchId: uuidv5("branch-d"),
+    qty: 80,
+    expiry: new Date("2026-05-15T00:00:00.000Z"),
+    costPerUnit: 140,
+    retailPrice: 360,
+    condition: "GOOD" as const,
+    sales14: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+  },
+  {
+    sku: "PACK-PST-500",
+    name: "Pasta Sauce 500g",
+    categoryId: uuidv5("cat-packaged"),
+    branchId: uuidv5("branch-a"),
+    qty: 300,
+    expiry: new Date("2026-06-10T00:00:00.000Z"),
+    costPerUnit: 150,
+    retailPrice: 340,
+    condition: "GOOD" as const,
+    sales14: [7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 6],
+  },
+];
+
 export function buildSeedData() {
   const today = getToday();
 
@@ -121,68 +187,7 @@ export function buildSeedData() {
     },
   ];
 
-  const productSpecs = [
-    {
-      sku: "DARY-YOG-500",
-      name: "Greek Yogurt 500g",
-      categoryId: uuidv5("cat-dairy"),
-      branchId: uuidv5("branch-a"),
-      qty: 120,
-      expiry: new Date("2026-05-18T00:00:00.000Z"),
-      costPerUnit: 180,
-      retailPrice: 320,
-      condition: "GOOD" as const,
-      sales14: [14, 13, 13, 13, 14, 13, 13, 13, 13, 14, 13, 13, 13, 13],
-    },
-    {
-      sku: "MEAT-CHK-1000",
-      name: "Chicken Breast 1kg",
-      categoryId: uuidv5("cat-meat"),
-      branchId: uuidv5("branch-b"),
-      qty: 45,
-      expiry: new Date("2026-05-17T00:00:00.000Z"),
-      costPerUnit: 650,
-      retailPrice: 1190,
-      condition: "CHECK_REQUIRED" as const,
-      sales14: [8, 7, 7, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7, 7],
-    },
-    {
-      sku: "PROD-BAN-1000",
-      name: "Bananas (kg)",
-      categoryId: uuidv5("cat-produce"),
-      branchId: uuidv5("branch-c"),
-      qty: 230,
-      expiry: new Date("2026-05-16T00:00:00.000Z"),
-      costPerUnit: 90,
-      retailPrice: 210,
-      condition: "GOOD" as const,
-      sales14: [89, 88, 88, 89, 88, 88, 88, 89, 88, 88, 89, 88, 88, 88],
-    },
-    {
-      sku: "BAKE-CRS-6",
-      name: "Croissants Pack",
-      categoryId: uuidv5("cat-bakery"),
-      branchId: uuidv5("branch-d"),
-      qty: 80,
-      expiry: new Date("2026-05-15T00:00:00.000Z"),
-      costPerUnit: 140,
-      retailPrice: 360,
-      condition: "GOOD" as const,
-      sales14: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
-    },
-    {
-      sku: "PACK-PST-500",
-      name: "Pasta Sauce 500g",
-      categoryId: uuidv5("cat-packaged"),
-      branchId: uuidv5("branch-a"),
-      qty: 300,
-      expiry: new Date("2026-06-10T00:00:00.000Z"),
-      costPerUnit: 150,
-      retailPrice: 340,
-      condition: "GOOD" as const,
-      sales14: [7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 6],
-    },
-  ];
+  const productSpecs = PRODUCT_SPECS;
 
   const products = productSpecs.map((p) => ({
     id: uuidv5(`prod-${p.sku}`),
@@ -271,70 +276,7 @@ async function main() {
     await prisma.product.create({ data: product });
   }
 
-  const productSpecs = [
-    {
-      sku: "DARY-YOG-500",
-      name: "Greek Yogurt 500g",
-      categoryId: uuidv5("cat-dairy"),
-      branchId: uuidv5("branch-a"),
-      qty: 120,
-      expiry: new Date("2026-05-18T00:00:00.000Z"),
-      costPerUnit: 180,
-      retailPrice: 320,
-      condition: "GOOD" as const,
-      sales14: [14, 13, 13, 13, 14, 13, 13, 13, 13, 14, 13, 13, 13, 13],
-    },
-    {
-      sku: "MEAT-CHK-1000",
-      name: "Chicken Breast 1kg",
-      categoryId: uuidv5("cat-meat"),
-      branchId: uuidv5("branch-b"),
-      qty: 45,
-      expiry: new Date("2026-05-17T00:00:00.000Z"),
-      costPerUnit: 650,
-      retailPrice: 1190,
-      condition: "CHECK_REQUIRED" as const,
-      sales14: [8, 7, 7, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7, 7],
-    },
-    {
-      sku: "PROD-BAN-1000",
-      name: "Bananas (kg)",
-      categoryId: uuidv5("cat-produce"),
-      branchId: uuidv5("branch-c"),
-      qty: 230,
-      expiry: new Date("2026-05-16T00:00:00.000Z"),
-      costPerUnit: 90,
-      retailPrice: 210,
-      condition: "GOOD" as const,
-      sales14: [89, 88, 88, 89, 88, 88, 88, 89, 88, 88, 89, 88, 88, 88],
-    },
-    {
-      sku: "BAKE-CRS-6",
-      name: "Croissants Pack",
-      categoryId: uuidv5("cat-bakery"),
-      branchId: uuidv5("branch-d"),
-      qty: 80,
-      expiry: new Date("2026-05-15T00:00:00.000Z"),
-      costPerUnit: 140,
-      retailPrice: 360,
-      condition: "GOOD" as const,
-      sales14: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
-    },
-    {
-      sku: "PACK-PST-500",
-      name: "Pasta Sauce 500g",
-      categoryId: uuidv5("cat-packaged"),
-      branchId: uuidv5("branch-a"),
-      qty: 300,
-      expiry: new Date("2026-06-10T00:00:00.000Z"),
-      costPerUnit: 150,
-      retailPrice: 340,
-      condition: "GOOD" as const,
-      sales14: [7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 6],
-    },
-  ];
-
-  for (const spec of productSpecs) {
+  for (const spec of PRODUCT_SPECS) {
     const batch = await prisma.inventoryBatch.create({
       data: {
         id: uuidv5(`batch-${spec.sku}`),
