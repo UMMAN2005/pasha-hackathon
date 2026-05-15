@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/db";
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 export async function writeAudit(
@@ -9,7 +8,7 @@ export async function writeAudit(
     entityType: string;
     entityId: string;
     action: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   }
 ) {
   await tx.auditLog.create({
