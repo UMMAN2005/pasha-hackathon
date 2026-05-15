@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { prisma } from "@/lib/db";
 import { getToday } from "@/lib/clock";
+import { recalcRiskService } from "@/server/services/recalc";
 
 const NAMESPACE = "bravo-hamiya-mvp";
 
@@ -131,7 +132,7 @@ export function buildSeedData() {
       costPerUnit: 180,
       retailPrice: 320,
       condition: "GOOD" as const,
-      sales14: [14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13],
+      sales14: [14, 13, 13, 13, 14, 13, 13, 13, 13, 14, 13, 13, 13, 13],
     },
     {
       sku: "MEAT-CHK-1000",
@@ -143,7 +144,7 @@ export function buildSeedData() {
       costPerUnit: 650,
       retailPrice: 1190,
       condition: "CHECK_REQUIRED" as const,
-      sales14: [8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+      sales14: [8, 7, 7, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7, 7],
     },
     {
       sku: "PROD-BAN-1000",
@@ -155,7 +156,7 @@ export function buildSeedData() {
       costPerUnit: 90,
       retailPrice: 210,
       condition: "GOOD" as const,
-      sales14: [89, 89, 89, 89, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88],
+      sales14: [89, 88, 88, 89, 88, 88, 88, 89, 88, 88, 89, 88, 88, 88],
     },
     {
       sku: "BAKE-CRS-6",
@@ -179,7 +180,7 @@ export function buildSeedData() {
       costPerUnit: 150,
       retailPrice: 340,
       condition: "GOOD" as const,
-      sales14: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6],
+      sales14: [7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 6],
     },
   ];
 
@@ -281,7 +282,7 @@ async function main() {
       costPerUnit: 180,
       retailPrice: 320,
       condition: "GOOD" as const,
-      sales14: [14, 14, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13],
+      sales14: [14, 13, 13, 13, 14, 13, 13, 13, 13, 14, 13, 13, 13, 13],
     },
     {
       sku: "MEAT-CHK-1000",
@@ -293,7 +294,7 @@ async function main() {
       costPerUnit: 650,
       retailPrice: 1190,
       condition: "CHECK_REQUIRED" as const,
-      sales14: [8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+      sales14: [8, 7, 7, 7, 8, 7, 7, 7, 7, 8, 7, 7, 7, 7],
     },
     {
       sku: "PROD-BAN-1000",
@@ -305,7 +306,7 @@ async function main() {
       costPerUnit: 90,
       retailPrice: 210,
       condition: "GOOD" as const,
-      sales14: [89, 89, 89, 89, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88],
+      sales14: [89, 88, 88, 89, 88, 88, 88, 89, 88, 88, 89, 88, 88, 88],
     },
     {
       sku: "BAKE-CRS-6",
@@ -329,7 +330,7 @@ async function main() {
       costPerUnit: 150,
       retailPrice: 340,
       condition: "GOOD" as const,
-      sales14: [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6],
+      sales14: [7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 6],
     },
   ];
 
@@ -373,6 +374,9 @@ async function main() {
   console.log(
     "Seed completed: 4 branches, 5 categories, 4 companies, 5 users, 5 products, 5 batches, 70 SalesTransaction"
   );
+
+  await recalcRiskService({ all: true });
+  console.log("Recalc completed: RiskScore and Recommendation rows created");
 }
 
 const isDirectRun = process.argv[1] === fileURLToPath(import.meta.url);
