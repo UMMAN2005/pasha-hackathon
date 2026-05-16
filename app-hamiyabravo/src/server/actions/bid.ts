@@ -29,7 +29,7 @@ export async function placeBidAction(input: unknown): Promise<Result> {
       ? await prisma.company.findUnique({ where: { id: session.companyId } })
       : await prisma.company.findFirst({ where: { type: "BUYER" } });
     if (!company) {
-      return { ok: false, error: "Alıcı şirkəti tapılmadı" };
+      return { ok: false, error: "Buyer company not found" };
     }
 
     const bid = await placeBid({
@@ -45,7 +45,7 @@ export async function placeBidAction(input: unknown): Promise<Result> {
     revalidatePath("/admin/listings");
     return {
       ok: true,
-      message: `Təklif qeydə alındı: ${(pricePerUnit / 100).toFixed(2)} ₼/ədəd × ${quantity} (#${bid.id.slice(0, 6)})`,
+      message: `Bid placed: ${(pricePerUnit / 100).toFixed(2)} AZN/unit × ${quantity} (#${bid.id.slice(0, 6)})`,
     };
   } catch (e) {
     if (
@@ -56,7 +56,7 @@ export async function placeBidAction(input: unknown): Promise<Result> {
     ) {
       return { ok: false, error: e.message };
     }
-    return { ok: false, error: "Təklif göndərilə bilmədi" };
+    return { ok: false, error: "Could not submit the bid" };
   }
 }
 
@@ -89,7 +89,7 @@ export async function acceptBidAction(
     ) {
       return { ok: false, error: e.message };
     }
-    return { ok: false, error: "Təklif qəbul edilə bilmədi" };
+    return { ok: false, error: "Could not accept the bid" };
   }
 }
 

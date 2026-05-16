@@ -46,6 +46,6 @@ export async function confirmPickupAction(
     if (e instanceof Error && e.message.includes("not authenticated")) {
       return { ok: false, error: "Daxil olmalısınız" };
     }
-    return { ok: false, error: "Xəta baş verdi — yenidən cəhd edin" };
+    return { ok: false, error: "An error occurred — please try again" };
   }
 }

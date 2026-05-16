@@ -15,7 +15,7 @@ export type BatchContext = {
 };
 
 const SYSTEM =
-  "Sən HamıyaBravo-nun əməliyyat AI-ısan. Bir-iki qısa cümlə ilə, Azərbaycan dilində, sadə dildə izah et NIYƏ bu hərəkət israfın qarşısını alır və pulu geri qaytarır. Verilməyən rəqəm işlətmə. Jarqon yox. Sakit, inamlı ton.";
+  "You are HamıyaBravo's operations AI. In 1-2 short sentences, explain in simple English WHY this action prevents waste and recovers money. No made-up numbers. No jargon. Calm, confident tone.";
 
 export async function explainRecommendation(
   rec: ExplainInput,
@@ -29,17 +29,17 @@ export async function explainRecommendation(
 }
 
 function buildPrompt(rec: ExplainInput, batch: BatchContext): string {
-  const parts: string[] = [`Qərar əsası: ${rec.reason}`];
-  if (batch.product) parts.push(`Məhsul: ${batch.product}`);
-  if (batch.qty) parts.push(`Miqdar: ${batch.qty}`);
+  const parts: string[] = [`Decision: ${rec.reason}`];
+  if (batch.product) parts.push(`Product: ${batch.product}`);
+  if (batch.qty) parts.push(`Quantity: ${batch.qty}`);
   if (batch.daysToExpiry !== undefined) {
     parts.push(
-      `Müddət: ${batch.daysToExpiry === 1 ? "sabah" : `${batch.daysToExpiry} gün`}`
+      `Days to expiry: ${batch.daysToExpiry === 1 ? "tomorrow" : `${batch.daysToExpiry} days`}`
     );
   }
   if (batch.riskBand) parts.push(`Risk: ${batch.riskBand}`);
-  if (batch.action) parts.push(`Hərəkət: ${batch.action}`);
-  if (batch.expectedLoss) parts.push(`Əvvəl itki: ${batch.expectedLoss}`);
-  if (batch.expectedRecovery) parts.push(`Bərpa: ${batch.expectedRecovery}`);
+  if (batch.action) parts.push(`Action: ${batch.action}`);
+  if (batch.expectedLoss) parts.push(`Expected loss: ${batch.expectedLoss}`);
+  if (batch.expectedRecovery) parts.push(`Recovery: ${batch.expectedRecovery}`);
   return parts.join("\n");
 }

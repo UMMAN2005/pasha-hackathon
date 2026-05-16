@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HamıyaBravo — AI israf azaldıcı ekosistem",
+  title: "HamıyaBravo — AI Waste Reduction Ecosystem",
   description:
-    "Bravo üçün AI: israfı proqnozlaşdır, bir toxunuşla təsdiqlə, restoranlara hərracla sat, təsiri sübut et.",
+    "AI for Bravo: forecast waste, confirm with one touch, sell to restaurants by auction, prove impact.",
 };
 
 export default function RootLayout({

@@ -25,7 +25,7 @@ export async function placeOrderService(input: {
 
     if (listing.status !== "ACTIVE") {
       throw new InsufficientStockError(
-        "Sifariş üçün mövcud deyil — zəmən almış ola bilər"
+        "Not available for ordering — stock may have been reserved"
       );
     }
 
@@ -34,13 +34,13 @@ export async function placeOrderService(input: {
 
     if (input.quantity < listing.minQty) {
       throw new InvalidQuantityError(
-        `Minimum miqdar ${listing.minQty} vahiddən az ola bilməz`
+        `Minimum quantity is ${listing.minQty} units`
       );
     }
 
     if (input.quantity > available) {
       throw new InsufficientStockError(
-        `InsufficientStock: ${available} vahid mövcuddur — zəmən seçin`
+        `Insufficient stock: only ${available} units available`
       );
     }
 

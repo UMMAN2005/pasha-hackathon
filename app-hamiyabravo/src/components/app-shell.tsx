@@ -11,6 +11,7 @@ import {
   MapPinned,
   Users,
   Navigation,
+  ListChecks,
   LogOut,
   Leaf,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export function AppShell({
     surface === "admin"
       ? [
           { label: "Overview", icon: LayoutDashboard, href: "/admin" },
+          { label: "AI Queue", icon: ListChecks, href: "/admin/recommendations" },
           { label: "Risk", icon: AlertTriangle, href: "/admin/inventory" },
           { label: "Branches", icon: MapPinned, href: "/admin/branches" },
           { label: "Customers", icon: Users, href: "/admin/customers" },

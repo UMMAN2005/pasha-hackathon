@@ -16,17 +16,17 @@ interface RiskListMiniProps {
 }
 
 function getRiskBand(score: number): string {
-  if (score >= 80) return "Kritik";
-  if (score >= 60) return "Yüksək";
-  if (score >= 40) return "İzlə";
-  return "Sabit";
+  if (score >= 80) return "Critical";
+  if (score >= 60) return "High";
+  if (score >= 40) return "Watch";
+  return "Stable";
 }
 
 export function RiskListMini({ risks }: RiskListMiniProps) {
   if (risks.length === 0) {
     return (
       <div className="bg-white rounded-xl p-8 border border-slate-200 text-center">
-        <p className="text-slate-600">Xəbərdi bir işə yaramamış tapıb</p>
+        <p className="text-slate-600">No waste risks detected</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function RiskListMini({ risks }: RiskListMiniProps) {
               <p className="text-sm font-semibold text-blue-600">
                 +{formatAzn(risk.expectedRecovery)}
               </p>
-              <p className="text-xs text-slate-500">Bərpa ola bilər</p>
+              <p className="text-xs text-slate-500">Can be recovered</p>
             </div>
           </div>
         </Link>

@@ -22,7 +22,7 @@ export async function reserveAction(
     const parsed = reserveSchema.parse(input);
 
     if (!user.companyId) {
-      return { ok: false, error: "Şirkət seçilməyib" };
+      return { ok: false, error: "No company selected" };
     }
 
     const order = await placeOrderService({
@@ -45,8 +45,8 @@ export async function reserveAction(
       return { ok: false, error: e.message };
     }
     if (e instanceof Error && e.message.includes("not authenticated")) {
-      return { ok: false, error: "Daxil olmalısınız" };
+      return { ok: false, error: "You must sign in" };
     }
-    return { ok: false, error: "Xəta baş verdi — yenidən cəhd edin" };
+    return { ok: false, error: "An error occurred — please try again" };
   }
 }

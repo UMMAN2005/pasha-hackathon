@@ -30,7 +30,7 @@ export function ReservePanel({
     if (result.ok && result.pickupCode) {
       setPickupCode(result.pickupCode);
     } else {
-      setError(result.error || "Xəta baş verdi");
+      setError(result.error || "An error occurred");
     }
   };
 
@@ -38,10 +38,10 @@ export function ReservePanel({
     return (
       <div className="rounded-lg bg-green-50 border border-green-200 p-6 text-center">
         <h2 className="text-lg font-bold text-green-900 mb-2">
-          Sifariş qəbul edildi!
+          Order confirmed!
         </h2>
         <p className="text-sm text-green-700 mb-4">
-          Aşağıdakı kodunuz üçün baxın:
+          Here is your pickup code:
         </p>
         <div
           className="text-4xl font-mono font-bold text-green-900 bg-white p-4 rounded border-2 border-green-300"
@@ -50,13 +50,13 @@ export function ReservePanel({
           {pickupCode}
         </div>
         <p className="text-xs text-green-600 mt-4 mb-6">
-          Qaldırış zamanı bu kodu göstərin
+          Show this code when you pick up
         </p>
         <button
           onClick={() => router.push("/marketplace/orders")}
           className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
         >
-          Sifariş siyahısına git
+          Go to my orders
         </button>
       </div>
     );
@@ -65,7 +65,7 @@ export function ReservePanel({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="text-sm font-medium text-slate-900">Miqdar</span>
+        <span className="text-sm font-medium text-slate-900">Quantity</span>
         <input
           type="number"
           min={1}
@@ -78,7 +78,7 @@ export function ReservePanel({
         />
       </label>
       <div className="bg-slate-50 p-3 rounded-lg">
-        <p className="text-xs text-slate-500">Cəmi qiymət</p>
+        <p className="text-xs text-slate-500">Total price</p>
         <p className="text-xl font-bold text-slate-900">
           {formatAzn(price * quantity)}
         </p>
@@ -95,7 +95,7 @@ export function ReservePanel({
         disabled={loading}
         className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-slate-300"
       >
-        {loading ? "Emallanır..." : "Sifariş et"}
+        {loading ? "Processing..." : "Place order"}
       </button>
     </div>
   );

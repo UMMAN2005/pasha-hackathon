@@ -18,12 +18,12 @@ export async function forecastNarrative(i: ForecastInput): Promise<string> {
   );
   const fallback =
     i.riskScore >= 60
-      ? `AI proqnozu: ${i.daysToExpiry} gün ərzində təxminən ${projected} ədəd satılmadan qala bilər. ${i.action} indi tətbiq edilməsə, bu məhsul itki riskindədir.`
-      : `AI proqnozu: tələbat sabitdir, ${i.product} normal satış planı ilə müddətinədək satılacaq.`;
+      ? `AI forecast: ~${projected} units may be unsold within ${i.daysToExpiry} days. If ${i.action} is not applied now, this product is at risk of loss.`
+      : `AI forecast: demand is stable. ${i.product} will sell through to expiry on the current plan.`;
 
   const text = await geminiGenerate(
-    "Sən HamıyaBravo-nun tələbat proqnozu AI-ısan. İki qısa, inamlı Azərbaycan cümləsi: (1) bu məhsulun müddətinə qədər nə qədərinin satılmadan qala biləcəyi proqnozu, (2) tövsiyə olunan hərəkət və niyə. Sadə dil, panika yox, rəqəmləri şişirtmə.",
-    `Məhsul: ${i.product}\nRisk: ${i.riskScore}/100\nMüddət: ${i.daysToExpiry} gün\nAnbar: ${i.qty} ədəd\nGünlük orta satış: ${i.avgDailySales}\nTövsiyə: ${i.action}\nXam proqnoz (satılmamış): ~${projected} ədəd`,
+    "You are HamıyaBravo's demand forecast AI. Two short, confident sentences in English: (1) forecast how many units of this product might go unsold before expiry, (2) recommended action and why. Simple language, no panic, no inflated numbers.",
+    `Product: ${i.product}\nRisk: ${i.riskScore}/100\nDays to expiry: ${i.daysToExpiry}\nQty on hand: ${i.qty} units\nAvg daily sales: ${i.avgDailySales}\nRecommended action: ${i.action}\nRaw forecast (unsold): ~${projected} units`,
     { timeoutMs: 4000, maxTokens: 180 }
   );
   return text ?? fallback;
@@ -44,13 +44,13 @@ export async function listingCopy(
   i: ListingCopyInput
 ): Promise<ListingCopy> {
   const fallback: ListingCopy = {
-    headline: `${i.product} — ${i.discountPercent}% endirimlə təzə`,
-    blurb: `${i.city} filialından restoranlar üçün münasib qiymət. Tez tükənə bilər.`,
+    headline: `${i.product} — ${i.discountPercent}% off, fresh stock`,
+    blurb: `Great price from our ${i.city} branch for restaurants. Limited time.`,
   };
 
   const raw = await geminiGenerate(
-    'Sən B2B qida bazarı üçün marketinq mətni yazan AI-san. Restoranlara xitabən cəlbedici, qısa Azərbaycan mətni yarat. SADƏCƏ JSON qaytar: {"headline": "...", "blurb": "..."}. headline 6 sözə qədər, blurb 14 sözə qədər. Emoji yox.',
-    `Məhsul: ${i.product}\nKateqoriya: ${i.category}\nEndirim: ${i.discountPercent}%\nŞəhər: ${i.city}`,
+    'You are a B2B food market copywriter. Write compelling, concise English marketing copy for restaurants. Return ONLY JSON: {"headline": "...", "blurb": "..."}. Headline max 6 words, blurb max 14 words. No emojis.',
+    `Product: ${i.product}\nCategory: ${i.category}\nDiscount: ${i.discountPercent}%\nCity: ${i.city}`,
     { timeoutMs: 4000, maxTokens: 160, temperature: 0.9 }
   );
   return parseJson<ListingCopy>(raw, fallback, (v) =>
@@ -92,29 +92,29 @@ export async function bidAdvisor(
   const best = scored[0].b;
   const fallback: BidAdvice = {
     recommendedBidId: best.id,
-    reasoning: `${best.company} ən yaxşı balansı verir: ${(
+    reasoning: `${best.company} offers the best balance: ${(
       (best.pricePerUnit * best.qty) /
       100
-    ).toFixed(2)} ₼ dəyər və ${best.reliability}/100 etibarlılıq. Tövsiyə: qəbul et.`,
+    ).toFixed(2)} AZN value and ${best.reliability}/100 reliability. Recommended: accept.`,
   };
 
   const list = bids
     .map(
       (b) =>
-        `id=${b.id} | ${b.company} | etibar=${b.reliability}/100 | ${(
+        `id=${b.id} | ${b.company} | reliability=${b.reliability}/100 | ${(
           b.pricePerUnit / 100
-        ).toFixed(2)} ₼/ədəd × ${b.qty} = ${(
+        ).toFixed(2)} AZN/unit × ${b.qty} = ${(
           (b.pricePerUnit * b.qty) /
           100
-        ).toFixed(2)} ₼`
+        ).toFixed(2)} AZN`
     )
     .join("\n");
 
   const raw = await geminiGenerate(
-    'Sən HamıyaBravo-nun hərrac məsləhətçisi AI-ısan. Verilən təkliflərdən birini seç: ən yüksək ümumi bərpa və alıcı etibarlılığını balanslaşdır. SADƏCƏ JSON qaytar: {"recommendedBidId":"<id>","reasoning":"<bir qısa Azərbaycan cümləsi>"}. id mütləq verilən siyahıdan olmalıdır.',
-    `Məhsul: ${product}\nİstənilən qiymət: ${(askPrice / 100).toFixed(
+    'You are HamıyaBravo auction advisor AI. Pick one bid: balance total recovered value and buyer reliability. Return ONLY JSON: {"recommendedBidId":"<id>","reasoning":"<one short sentence in English>"}. Id must be from the list provided.',
+    `Product: ${product}\nAsking price: ${(askPrice / 100).toFixed(
       2
-    )} ₼/ədəd\nTəkliflər:\n${list}`,
+    )} AZN/unit\nBids:\n${list}`,
     { timeoutMs: 4500, maxTokens: 200 }
   );
 

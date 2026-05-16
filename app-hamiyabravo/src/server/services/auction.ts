@@ -149,20 +149,20 @@ export async function placeBid(input: {
       include: { batch: true, bids: { orderBy: { pricePerUnit: "desc" } } },
     });
     if (listing.status !== "ACTIVE") {
-      throw new InsufficientStockError("Hərrac bağlanıb");
+      throw new InsufficientStockError("Auction is closed");
     }
     const available =
       listing.batch.quantityOnHand - listing.batch.quantityReserved;
     if (input.quantity < listing.minQty || input.quantity > available) {
       throw new InvalidQuantityError(
-        `Miqdar ${listing.minQty}–${available} aralığında olmalıdır`
+        `Quantity must be between ${listing.minQty} and ${available} units`
       );
     }
     const top = listing.bids[0]?.pricePerUnit ?? null;
     const floor = minNextBid(top, listing.price);
     if (input.pricePerUnit < floor) {
       throw new InvalidQuantityError(
-        `Təklif ən azı ${(floor / 100).toFixed(2)} ₼/ədəd olmalıdır`
+        `Bid must be at least ${(floor / 100).toFixed(2)} AZN per unit`
       );
     }
 
@@ -207,12 +207,12 @@ export async function acceptBid(bidId: string, actor: Actor) {
     });
     const listing = bid.listing;
     if (listing.status !== "ACTIVE") {
-      throw new NotFoundError("Hərrac artıq bağlanıb");
+      throw new NotFoundError("Auction is already closed");
     }
     const available =
       listing.batch.quantityOnHand - listing.batch.quantityReserved;
     if (bid.quantity > available) {
-      throw new InsufficientStockError("Kifayət qədər ehtiyat yoxdur");
+      throw new InsufficientStockError("Not enough stock available");
     }
 
     await tx.inventoryBatch.update({

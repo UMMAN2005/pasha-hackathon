@@ -9,10 +9,10 @@ export interface ListBatchesFilter {
 }
 
 const RISK_BANDS: Record<string, [number, number]> = {
-  Kritik: [80, 100],
-  "Yüksək": [60, 79],
-  "İzlə": [40, 59],
-  Sabit: [0, 39],
+  Critical: [80, 100],
+  "High": [60, 79],
+  "Watch": [40, 59],
+  Stable: [0, 39],
 };
 
 export async function listBatches(filters: ListBatchesFilter = {}) {

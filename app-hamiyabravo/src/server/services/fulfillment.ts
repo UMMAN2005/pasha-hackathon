@@ -18,11 +18,11 @@ export async function confirmPickupService(
     });
 
     if (!order) {
-      throw new NotFoundError("Qaldırış kodu tapılmadı");
+      throw new NotFoundError("Pickup code not found");
     }
 
     if (order.status !== "RESERVED") {
-      throw new NotFoundError("Bu sifariş artıq qaldırılıb");
+      throw new NotFoundError("This order has already been picked up");
     }
 
     const batch = order.listing.batch;
@@ -31,7 +31,7 @@ export async function confirmPickupService(
 
     if (newOnHand < 0 || newReserved < 0) {
       throw new InsufficientStockError(
-        "Yetərli mövcud mal yoxdur — sistem xətası"
+        "Insufficient stock available — system error"
       );
     }
 

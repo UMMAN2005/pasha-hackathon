@@ -38,7 +38,7 @@ export function recommend(i: DecisionInput): Decision {
       actionType: "DISPOSE",
       priority: 1,
       complianceGate: false,
-      reason: "Təhlükəsizlik riski — satış bloklandı, utilizasiya/yoxlama",
+      reason: "Safety risk — sale blocked; dispose or inspect",
     };
 
   if (condition === "CHECK_REQUIRED" && r >= 80)
@@ -46,7 +46,7 @@ export function recommend(i: DecisionInput): Decision {
       actionType: "LIST_B2B",
       priority: 1,
       complianceGate: true,
-      reason: "Kritik — əvvəlcə uyğunluq yoxlaması, sonra təcili B2B",
+      reason: "Critical — compliance check first, then urgent B2B",
     };
 
   if (r >= 80 && q >= QTY_HIGH && (c === "Produce" || c === "Bakery"))
@@ -54,7 +54,7 @@ export function recommend(i: DecisionInput): Decision {
       actionType: "BUNDLE",
       priority: 2,
       complianceGate: false,
-      reason: "Yüksək risk — kafelər/çörəkxanalar üçün dəstə təklifi",
+      reason: "High risk — bundle deal for cafes & bakeries",
     };
 
   if (r >= 80 && q >= QTY_HIGH)
@@ -62,7 +62,7 @@ export function recommend(i: DecisionInput): Decision {
       actionType: "LIST_B2B",
       priority: 2,
       complianceGate: false,
-      reason: "Bu gün hərəkət lazımdır — restoranlara endirimlə B2B",
+      reason: "Act today — discounted B2B to restaurants",
     };
 
   if (r >= 80)
@@ -70,7 +70,7 @@ export function recommend(i: DecisionInput): Decision {
       actionType: "LIST_B2B",
       priority: 2,
       complianceGate: false,
-      reason: "Yüksək risk — B2B siyahıya əlavə et",
+      reason: "High risk — list on the B2B marketplace",
     };
 
   if (r >= 50)
@@ -78,13 +78,13 @@ export function recommend(i: DecisionInput): Decision {
       actionType: "IN_STORE_DISCOUNT",
       priority: 3,
       complianceGate: false,
-      reason: "Orta risk — mağazada endirim, 24 saat izlə",
+      reason: "Medium risk — in-store discount, monitor 24h",
     };
 
   return {
     actionType: "KEEP",
     priority: 5,
     complianceGate: false,
-    reason: "Sabit — adi satış planı, izləməyə davam",
+    reason: "Stable — normal sales plan, keep monitoring",
   };
 }

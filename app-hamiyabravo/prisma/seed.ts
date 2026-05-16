@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getToday } from "@/lib/clock";
 import { recalcRiskService } from "@/server/services/recalc";
 import { createListingFromRecommendation } from "@/server/services/listing";
+import { acceptBid } from "@/server/services/auction";
 
 const NAMESPACE = "bravo-hamiya-mvp";
 
@@ -235,6 +236,104 @@ export function buildSeedData() {
   };
 }
 
+// ---- deterministic PRNG + helpers (no Math.random / Date.now) ----
+function rng(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const ri = (r: () => number, lo: number, hi: number) =>
+  lo + Math.floor(r() * (hi - lo + 1));
+const dayOffset = (today: Date, d: number) => {
+  const x = new Date(today);
+  x.setDate(x.getDate() + d);
+  return x;
+};
+
+const CITY_COORD: Record<string, [number, number]> = {
+  Baku: [40.4093, 49.8671],
+  Sumqayit: [40.5897, 49.6686],
+  Ganja: [40.6828, 46.3606],
+  Mingachevir: [40.77, 47.0489],
+  Lankaran: [38.7529, 48.8475],
+  Shaki: [41.1975, 47.1706],
+  Quba: [41.3614, 48.5128],
+  Yevlakh: [40.619, 47.15],
+};
+
+const EXTRA_BRANCHES = [
+  ["branch-e", "Bravo Branch E", "Mingachevir"],
+  ["branch-f", "Bravo Branch F", "Lankaran"],
+  ["branch-g", "Bravo Branch G", "Shaki"],
+  ["branch-h", "Bravo Branch H", "Quba"],
+  ["branch-i", "Bravo Branch I", "Yevlakh"],
+  ["branch-j", "Bravo Branch J", "Baku"],
+] as const;
+
+const EXTRA_CATEGORIES = [
+  ["cat-beverages", "Beverages", 2],
+  ["cat-frozen", "Frozen", 2],
+  ["cat-deli", "Deli", 4],
+] as const;
+
+const EXTRA_BUYERS: [string, string, string, number][] = [
+  ["company-caspian", "Caspian Grill House", "Baku", 92],
+  ["company-shirvan", "Shirvan Restaurant", "Baku", 81],
+  ["company-firuze", "Firuzə Catering", "Baku", 69],
+  ["company-old", "Old City Bistro", "Baku", 85],
+  ["company-pekara", "Pekara Bakery Co", "Sumqayit", 77],
+  ["company-mugam", "Muğam Lounge", "Ganja", 64],
+  ["company-shah", "Shah Palace Hotel", "Baku", 95],
+  ["company-zira", "Zira Fine Dining", "Baku", 90],
+  ["company-cay", "Çay Evi Network", "Lankaran", 58],
+  ["company-bahar", "Bahar Cafeteria", "Mingachevir", 72],
+  ["company-qaynana", "Qaynana Kitchen", "Ganja", 66],
+  ["company-park", "Park Inn Kitchen", "Baku", 88],
+  ["company-sheki", "Sheki Halva House", "Shaki", 79],
+];
+
+// Generated product catalog (hero 5 stay in PRODUCT_SPECS).
+const CATALOG: [string, string, number, number][] = [
+  ["Milk 1L", "cat-dairy", 95, 175],
+  ["Kefir 500ml", "cat-dairy", 78, 150],
+  ["Butter 200g", "cat-dairy", 240, 420],
+  ["White Cheese 500g", "cat-dairy", 360, 690],
+  ["Ayran 500ml", "cat-dairy", 45, 95],
+  ["Beef Mince 1kg", "cat-meat", 720, 1290],
+  ["Lamb Chops 1kg", "cat-meat", 980, 1750],
+  ["Sausages 500g", "cat-meat", 310, 560],
+  ["Chicken Wings 1kg", "cat-meat", 420, 760],
+  ["Tomatoes 1kg", "cat-produce", 70, 160],
+  ["Cucumbers 1kg", "cat-produce", 60, 140],
+  ["Apples 1kg", "cat-produce", 80, 180],
+  ["Potatoes 2kg", "cat-produce", 90, 210],
+  ["Strawberries 250g", "cat-produce", 180, 360],
+  ["Lemons 1kg", "cat-produce", 120, 250],
+  ["Tandir Bread", "cat-bakery", 35, 80],
+  ["Baguette", "cat-bakery", 40, 95],
+  ["Cake Slice", "cat-bakery", 150, 320],
+  ["Donuts 4pk", "cat-bakery", 130, 280],
+  ["Spaghetti 500g", "cat-packaged", 70, 150],
+  ["Rice 1kg", "cat-packaged", 140, 260],
+  ["Sunflower Oil 1L", "cat-packaged", 190, 340],
+  ["Canned Beans 400g", "cat-packaged", 60, 130],
+  ["Orange Juice 1L", "cat-beverages", 130, 260],
+  ["Cola 1.5L", "cat-beverages", 90, 190],
+  ["Mineral Water 6x0.5L", "cat-beverages", 110, 230],
+  ["Iced Tea 1L", "cat-beverages", 95, 200],
+  ["Frozen Pizza", "cat-frozen", 220, 430],
+  ["Frozen Berries 500g", "cat-frozen", 240, 460],
+  ["Ice Cream 1L", "cat-frozen", 200, 390],
+  ["Olives 300g", "cat-deli", 160, 320],
+  ["Hummus 250g", "cat-deli", 140, 290],
+  ["Smoked Salmon 200g", "cat-deli", 520, 940],
+];
+
 export async function seedDatabase() {
   const today = getToday();
   const data = buildSeedData();
@@ -253,145 +352,348 @@ export async function seedDatabase() {
   await prisma.category.deleteMany({});
   await prisma.company.deleteMany({});
 
-  for (const branch of data.branches) {
-    await prisma.branch.create({ data: branch });
-  }
+  // Branches (hero + extra)
+  const branches = [
+    ...data.branches,
+    ...EXTRA_BRANCHES.map(([slug, name, city]) => ({
+      id: uuidv5(slug),
+      name,
+      city,
+      latitude: CITY_COORD[city][0],
+      longitude: CITY_COORD[city][1],
+    })),
+  ];
+  await prisma.branch.createMany({ data: branches });
 
-  for (const category of data.categories) {
-    await prisma.category.create({ data: category });
-  }
+  // Categories (hero + extra)
+  await prisma.category.createMany({
+    data: [
+      ...data.categories,
+      ...EXTRA_CATEGORIES.map(([slug, name, p]) => ({
+        id: uuidv5(slug),
+        name,
+        perishabilityLevel: p,
+      })),
+    ],
+  });
 
-  for (const company of data.companies) {
-    await prisma.company.create({
-      data: {
-        id: company.id,
-        type: company.type,
-        legalName: company.legalName,
-        verificationStatus: company.verificationStatus,
-        reliabilityScore: company.reliabilityScore,
-        city: company.city,
-        latitude: company.latitude,
-        longitude: company.longitude,
-      },
-    });
-  }
+  // Companies (hero + extra buyers)
+  const companies = [
+    ...data.companies.map((c) => ({
+      id: c.id,
+      type: c.type,
+      legalName: c.legalName,
+      verificationStatus: c.verificationStatus,
+      reliabilityScore: c.reliabilityScore,
+      city: c.city,
+      latitude: c.latitude,
+      longitude: c.longitude,
+    })),
+    ...EXTRA_BUYERS.map(([slug, name, city, rel], i) => ({
+      id: uuidv5(slug),
+      type: "BUYER",
+      legalName: name,
+      verificationStatus: i % 7 === 0 ? "PENDING" : "VERIFIED",
+      reliabilityScore: rel,
+      city,
+      latitude: CITY_COORD[city][0] + (i % 3) * 0.01,
+      longitude: CITY_COORD[city][1] + (i % 2) * 0.01,
+    })),
+  ];
+  await prisma.company.createMany({ data: companies });
 
-  for (const user of data.users) {
-    await prisma.user.create({
-      data: {
-        id: user.id,
-        role: user.role,
-        name: user.name,
-        email: user.email,
-        companyId: user.companyId,
-        branchId: user.branchId,
-      },
-    });
-  }
+  // Users (hero + a couple buyer logins + branch managers)
+  const users = [
+    ...data.users,
+    {
+      id: uuidv5("user-shah"),
+      role: "BUSINESS_BUYER",
+      name: "Shah Palace Hotel",
+      email: "buyer@shah.az",
+      companyId: uuidv5("company-shah"),
+      branchId: null,
+    },
+    {
+      id: uuidv5("user-mgr-c"),
+      role: "BRANCH_MANAGER",
+      name: "Nigar",
+      email: "mgr.c@bravo.az",
+      companyId: uuidv5("company-bravo"),
+      branchId: uuidv5("branch-c"),
+    },
+  ];
+  await prisma.user.createMany({ data: users });
 
-  for (const product of data.products) {
-    await prisma.product.create({ data: product });
-  }
+  // Products (hero + generated catalog)
+  const genProducts = CATALOG.map(([name, cat], idx) => {
+    const sku = `GEN-${cat.slice(4, 7).toUpperCase()}-${(idx + 1)
+      .toString()
+      .padStart(3, "0")}`;
+    return {
+      id: uuidv5(`prod-${sku}`),
+      sku,
+      name,
+      categoryId: uuidv5(cat),
+      barcode: null,
+      brand: null,
+      unitSize: null,
+      storageType: null,
+      isActive: true,
+      _cat: cat,
+      _cost: CATALOG[idx][2],
+      _retail: CATALOG[idx][3],
+    };
+  });
+  await prisma.product.createMany({
+    data: [
+      ...data.products,
+      ...genProducts.map(({ _cat, _cost, _retail, ...p }) => {
+        void _cat;
+        void _cost;
+        void _retail;
+        return p;
+      }),
+    ],
+  });
 
+  // Hero batches + 14-day sales (kept for the demo narrative)
+  const heroBatches = PRODUCT_SPECS.map((spec) => ({
+    id: uuidv5(`batch-${spec.sku}`),
+    productId: uuidv5(`prod-${spec.sku}`),
+    branchId: spec.branchId,
+    lotNumber: `LOT-${spec.sku.slice(-3)}-${today
+      .toISOString()
+      .slice(0, 10)
+      .replace(/-/g, "")}`,
+    expiryDate: spec.expiry,
+    quantityOnHand: spec.qty,
+    costPerUnit: spec.costPerUnit,
+    retailPrice: spec.retailPrice,
+    conditionStatus: spec.condition,
+  }));
+  const sales: {
+    productId: string;
+    branchId: string;
+    quantity: number;
+    unitPrice: number;
+    soldAt: Date;
+  }[] = [];
   for (const spec of PRODUCT_SPECS) {
-    const batch = await prisma.inventoryBatch.create({
-      data: {
-        id: uuidv5(`batch-${spec.sku}`),
+    for (let i = 0; i < 14; i++) {
+      sales.push({
         productId: uuidv5(`prod-${spec.sku}`),
         branchId: spec.branchId,
-        lotNumber: `LOT-${spec.sku.substring(spec.sku.length - 3)}-${today
-          .toISOString()
-          .substring(0, 10)
-          .replace(/-/g, "")}`,
-        expiryDate: spec.expiry,
-        quantityOnHand: spec.qty,
-        costPerUnit: spec.costPerUnit,
-        retailPrice: spec.retailPrice,
-        conditionStatus: spec.condition,
-      },
-    });
-
-    const fourteenDaysAgo = new Date(today);
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-    for (let i = 0; i < 14; i++) {
-      const saleDate = new Date(fourteenDaysAgo);
-      saleDate.setDate(saleDate.getDate() + i);
-
-      await prisma.salesTransaction.create({
-        data: {
-          productId: uuidv5(`prod-${spec.sku}`),
-          branchId: spec.branchId,
-          quantity: spec.sales14[i],
-          unitPrice: spec.retailPrice,
-          soldAt: saleDate,
-        },
+        quantity: spec.sales14[i],
+        unitPrice: spec.retailPrice,
+        soldAt: dayOffset(today, i - 14),
       });
     }
   }
 
+  // Generated batches: each product across 2-4 branches with varied risk
+  const branchIds = branches.map((b) => b.id);
+  const genBatches: typeof heroBatches = [];
+  genProducts.forEach((p, pi) => {
+    const r = rng(1000 + pi);
+    const nB = ri(r, 2, 4);
+    const used = new Set<number>();
+    for (let k = 0; k < nB; k++) {
+      let bi = ri(r, 0, branchIds.length - 1);
+      while (used.has(bi)) bi = (bi + 1) % branchIds.length;
+      used.add(bi);
+      const qty = ri(r, 25, 420);
+      const expDays = ri(r, -2, 16);
+      const id = uuidv5(`gbatch-${p.sku}-${k}`);
+      genBatches.push({
+        id,
+        productId: p.id,
+        branchId: branchIds[bi],
+        lotNumber: `LOT-${p.sku.slice(-3)}-${k}${pi}`,
+        expiryDate: dayOffset(today, expDays),
+        quantityOnHand: qty,
+        costPerUnit: p._cost,
+        retailPrice: p._retail,
+        conditionStatus: r() < 0.08 ? "CHECK_REQUIRED" : "GOOD",
+      });
+      const base = Math.min(
+        90,
+        Math.max(1, Math.round(qty / Math.max(2, expDays + 3)))
+      );
+      for (let d = 0; d < 14; d++) {
+        sales.push({
+          productId: p.id,
+          branchId: branchIds[bi],
+          quantity: Math.max(0, base + ((d % 3) - 1) + (r() < 0.5 ? 1 : 0)),
+          unitPrice: p._retail,
+          soldAt: dayOffset(today, d - 14),
+        });
+      }
+    }
+  });
+
+  await prisma.inventoryBatch.createMany({
+    data: [...heroBatches, ...genBatches],
+  });
+  // chunk sales inserts (SQLite variable limit safety)
+  for (let i = 0; i < sales.length; i += 200) {
+    await prisma.salesTransaction.createMany({
+      data: sales.slice(i, i + 200),
+    });
+  }
+
   console.log(
-    "Seed completed: 4 branches, 5 categories, 4 companies, 5 users, 5 products, 5 batches, 70 SalesTransaction"
+    `Seed: ${branches.length} branches, ${companies.length} companies, ${
+      data.products.length + genProducts.length
+    } products, ${heroBatches.length + genBatches.length} batches, ${
+      sales.length
+    } sales`
   );
 
   await recalcRiskService({ all: true });
-  console.log("Recalc completed: RiskScore and Recommendation rows created");
+  console.log("Recalc completed");
 
-  await seedLiveAuctions();
-  console.log("Demo auctions + live bids seeded");
+  await seedMarketplace(today);
+  console.log("Marketplace, bids, orders & pickups seeded");
 }
 
-// Pre-open a couple of auctions with bids so the marketplace looks alive.
-async function seedLiveAuctions() {
-  const buyers = [
-    { id: uuidv5("company-astoria"), name: "Astoria Hotel" },
-    { id: uuidv5("company-nar"), name: "Restoran Nar & Qrill" },
-    { id: uuidv5("company-merkez"), name: "Kafe Mərkəz" },
-  ];
+// Build a lively marketplace: hero ACTIVE auctions + many more,
+// lots of bids, accepted orders and completed pickups.
+async function seedMarketplace(today: Date) {
+  const buyers = (
+    await prisma.company.findMany({ where: { type: "BUYER" } })
+  ).map((c) => ({ id: c.id, name: c.legalName }));
 
-  // Approve the two hottest recommendations into live listings.
-  for (const sku of ["DARY-YOG-500", "MEAT-CHK-1000"]) {
+  // Hero auctions stay ACTIVE with a clean bid ladder (demo flow).
+  const heroSkus = ["DARY-YOG-500", "MEAT-CHK-1000"];
+  for (const sku of heroSkus) {
     const rec = await prisma.recommendation.findFirst({
-      where: {
-        status: "PENDING",
-        batch: { product: { sku } },
-      },
+      where: { status: "PENDING", batch: { product: { sku } } },
     });
     if (!rec) continue;
     const listing = await createListingFromRecommendation(rec.id, {
       id: "seed",
       name: "Seed",
     });
-
-    // A small ladder of bids: last one is LEADING (highest).
     const base = Math.round(listing.price * 0.82);
     const step = Math.max(40, Math.round(listing.price * 0.05));
     const ladder =
       sku === "DARY-YOG-500"
         ? [
-            { buyer: buyers[2], price: base, qty: 30 },
-            { buyer: buyers[1], price: base + step, qty: 40 },
-            { buyer: buyers[0], price: base + step * 2, qty: 50 },
+            { b: buyers[2], p: base, q: 30 },
+            { b: buyers[1], p: base + step, q: 40 },
+            { b: buyers[0], p: base + step * 2, q: 50 },
           ]
         : [
-            { buyer: buyers[1], price: base, qty: 12 },
-            { buyer: buyers[0], price: base + step, qty: 20 },
+            { b: buyers[1], p: base, q: 12 },
+            { b: buyers[0], p: base + step, q: 20 },
           ];
+    await prisma.bid.createMany({
+      data: ladder.map((x, i) => ({
+        listingId: listing.id,
+        buyerCompanyId: x.b.id,
+        buyerName: x.b.name,
+        pricePerUnit: x.p,
+        quantity: x.q,
+        status: i === ladder.length - 1 ? "LEADING" : "OUTBID",
+      })),
+    });
+  }
 
-    for (let i = 0; i < ladder.length; i++) {
-      const b = ladder[i];
-      const leading = i === ladder.length - 1;
-      await prisma.bid.create({
-        data: {
-          listingId: listing.id,
-          buyerCompanyId: b.buyer.id,
-          buyerName: b.buyer.name,
-          pricePerUnit: b.price,
-          quantity: b.qty,
-          status: leading ? "LEADING" : "OUTBID",
-        },
+  // Many more auctions from the strongest remaining recommendations.
+  const recs = await prisma.recommendation.findMany({
+    where: {
+      status: "PENDING",
+      actionType: { in: ["LIST_B2B", "BUNDLE"] },
+    },
+    include: { batch: { include: { product: true } } },
+    orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
+    take: 22,
+  });
+
+  const acceptedListingIds: string[] = [];
+  let li = 0;
+  for (const rec of recs) {
+    if (heroSkus.includes(rec.batch.product.sku)) continue;
+    let listing;
+    try {
+      listing = await createListingFromRecommendation(rec.id, {
+        id: "seed",
+        name: "Seed",
+      });
+    } catch {
+      continue;
+    }
+    const r = rng(7000 + li);
+    const nBids = ri(r, 2, 6);
+    const base = Math.round(listing.price * (0.78 + r() * 0.12));
+    const bidIds: string[] = [];
+    const rows = [];
+    for (let k = 0; k < nBids; k++) {
+      const buyer = buyers[ri(r, 0, buyers.length - 1)];
+      const price = base + k * Math.max(30, Math.round(listing.price * 0.04));
+      const id = uuidv5(`gbid-${listing.id}-${k}`);
+      bidIds.push(id);
+      rows.push({
+        id,
+        listingId: listing.id,
+        buyerCompanyId: buyer.id,
+        buyerName: buyer.name,
+        pricePerUnit: price,
+        quantity: ri(r, 5, Math.max(6, Math.min(listing.maxQty, 60))),
+        status: k === nBids - 1 ? "LEADING" : "OUTBID",
       });
     }
+    await prisma.bid.createMany({ data: rows });
+    // Accept ~60% of these so there are orders & pickups.
+    if (li % 5 !== 0) {
+      try {
+        await acceptBid(bidIds[bidIds.length - 1], {
+          id: uuidv5("user-aysel"),
+          name: "Aysel",
+        });
+        acceptedListingIds.push(listing.id);
+      } catch {
+        /* listing race — skip */
+      }
+    }
+    li++;
+  }
+
+  // Complete pickups on most accepted orders so KPIs & impact are rich.
+  const orders = await prisma.order.findMany({
+    where: { status: "RESERVED" },
+    include: { listing: { include: { batch: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  let oi = 0;
+  for (const o of orders) {
+    if (oi % 4 === 0) {
+      oi++;
+      continue;
+    } // leave some reserved
+    const ago = oi % 5 === 0 ? 0 : oi % 3; // several picked up "today"
+    await prisma.order.update({
+      where: { id: o.id },
+      data: { status: "PICKED_UP", pickedUpAt: dayOffset(today, -ago) },
+    });
+    await prisma.inventoryBatch.update({
+      where: { id: o.listing.batchId },
+      data: {
+        quantityOnHand: { decrement: o.quantity },
+        quantityReserved: { decrement: o.quantity },
+      },
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorName: "Logistics",
+        entityType: "Order",
+        entityId: o.id,
+        action: "PICKUP_CONFIRM",
+        metadata: JSON.stringify({ qty: o.quantity }),
+        createdAt: dayOffset(today, -ago),
+      },
+    });
+    oi++;
   }
 }
 
