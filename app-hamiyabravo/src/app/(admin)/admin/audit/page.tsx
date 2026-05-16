@@ -1,15 +1,16 @@
 import { prisma } from "@/lib/db";
 import { GlassCard, SectionTitle, Pill } from "@/components/ui/kit";
+import { CheckCircle, XCircle, Package, Truck, TrendingUp, Sparkles, Repeat2, AlertTriangle } from "lucide-react";
 
-const actionIcons: Record<string, string> = {
-  APPROVE: "✅",
-  REJECT: "❌",
-  RESERVE: "📦",
-  PICK_UP: "🚚",
-  BID_PLACED: "💰",
-  BID_ACCEPTED: "✦",
-  RECOMMEND: "🤖",
-  CONFIRM: "✓",
+const actionIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  APPROVE: CheckCircle,
+  REJECT: XCircle,
+  RESERVE: Package,
+  PICK_UP: Truck,
+  BID_PLACED: TrendingUp,
+  BID_ACCEPTED: Sparkles,
+  RECOMMEND: Repeat2,
+  CONFIRM: CheckCircle,
 };
 
 export default async function AuditPage() {
@@ -21,14 +22,14 @@ export default async function AuditPage() {
   return (
     <div className="p-8 space-y-8">
       <SectionTitle
-        kicker="📝 Activity Feed"
-        title="Sistem Tarixçəsi"
+        kicker="Activity log"
+        title="System history"
         className="mb-2"
       />
 
       {logs.length === 0 ? (
         <GlassCard className="p-12 text-center" rise>
-          <p className="text-white text-lg">Qeyd yoxdur</p>
+          <p className="text-white text-lg">No records</p>
         </GlassCard>
       ) : (
         <div className="space-y-3">
@@ -43,6 +44,8 @@ export default async function AuditPage() {
               log.action.includes("RECOMMEND") ? "RECOMMEND" :
               "CONFIRM";
 
+            const Icon = actionIcons[actionType] || AlertTriangle;
+
             return (
               <div
                 key={log.id}
@@ -54,8 +57,8 @@ export default async function AuditPage() {
                 >
                   <div className="flex items-center gap-4">
                     {/* Icon */}
-                    <div className="text-3xl flex-shrink-0">
-                      {actionIcons[actionType] || "📌"}
+                    <div className="flex-shrink-0">
+                      <Icon className="h-6 w-6 text-emerald-400" />
                     </div>
 
                     {/* Content */}
@@ -74,17 +77,17 @@ export default async function AuditPage() {
                       </div>
                       <div className="grid grid-cols-3 gap-4 mt-2 text-xs">
                         <div>
-                          <p className="text-violet-400 uppercase tracking-widest">Entity</p>
+                          <p className="text-emerald-400 uppercase tracking-widest">Entity ID</p>
                           <p className="text-white font-mono truncate">
                             {log.entityId.substring(0, 12)}...
                           </p>
                         </div>
                         <div>
-                          <p className="text-violet-400 uppercase tracking-widest">Type</p>
+                          <p className="text-emerald-400 uppercase tracking-widest">Type</p>
                           <p className="text-white">{log.entityType}</p>
                         </div>
                         <div>
-                          <p className="text-violet-400 uppercase tracking-widest">Actor</p>
+                          <p className="text-emerald-400 uppercase tracking-widest">Actor</p>
                           <p className="text-white font-medium">{log.actorName}</p>
                         </div>
                       </div>
@@ -92,8 +95,8 @@ export default async function AuditPage() {
 
                     {/* Timestamp */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-violet-300 whitespace-nowrap">
-                        {new Date(log.createdAt).toLocaleString("az-AZ", {
+                      <p className="text-xs text-emerald-300 whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleString("en-US", {
                           month: "short",
                           day: "numeric",
                           hour: "2-digit",

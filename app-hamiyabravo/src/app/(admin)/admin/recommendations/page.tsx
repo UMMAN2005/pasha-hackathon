@@ -27,19 +27,19 @@ export default async function RecommendationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between animate-fade-up">
         <SectionTitle
-          kicker="✦ AI"
-          title="Нәтicə cərəyan"
+          kicker="AI insights"
+          title="AI recommendations"
           className="mb-0"
         />
         <Pill tone="violet">
-          {recs.length} gözləyir
+          {recs.length} waiting
         </Pill>
       </div>
 
       {recs.length === 0 ? (
         <GlassCard className="p-12 text-center" rise>
-          <p className="text-white text-lg mb-2">Hazır tövsiyə yoxdur</p>
-          <p className="text-violet-200 text-sm">Bütün məhsullar stabildir</p>
+          <p className="text-white text-lg mb-2">No recommendations available</p>
+          <p className="text-emerald-200 text-sm">All products are stable</p>
         </GlassCard>
       ) : (
         <div className="space-y-5">
@@ -49,10 +49,10 @@ export default async function RecommendationsPage() {
             const confidence = rec.batch.riskScores[0]?.confidence ?? 0.5;
             const confidenceWords =
               confidence >= 0.8
-                ? "yüksək"
+                ? "high"
                 : confidence >= 0.6
-                  ? "orta"
-                  : "aşağı";
+                  ? "medium"
+                  : "low";
 
             return (
               <div
@@ -67,25 +67,25 @@ export default async function RecommendationsPage() {
                         <h3 className="text-lg font-bold text-white">
                           {rec.batch.product.name}
                         </h3>
-                        <p className="text-sm text-violet-200">
+                        <p className="text-sm text-emerald-200">
                           {rec.batch.branch.name}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-violet-300 uppercase tracking-widest mb-2">Risk</p>
+                        <p className="text-xs text-emerald-300 uppercase tracking-widest mb-2">Risk</p>
                         <div className="flex items-center gap-2">
-                          <span className="text-3xl font-black bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                          <span className="text-3xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
                             {riskScore}
                           </span>
                           <RiskBadge score={riskScore} />
                         </div>
                       </div>
                       <div className="pt-2 border-t border-white/10">
-                        <p className="text-sm text-violet-100 leading-relaxed">
+                        <p className="text-sm text-emerald-100 leading-relaxed">
                           &ldquo;{rec.reason}&rdquo;
                         </p>
-                        <p className="text-xs text-violet-400 mt-2">
-                          İnam: <span className="font-bold">{confidenceWords}</span>
+                        <p className="text-xs text-emerald-400 mt-2">
+                          Confidence: <span className="font-bold">{confidenceWords}</span>
                         </p>
                       </div>
                     </div>
@@ -95,7 +95,7 @@ export default async function RecommendationsPage() {
                       {/* Recovery */}
                       <div className="bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-xl p-4 border border-emerald-400/30 backdrop-blur">
                         <p className="text-xs text-emerald-300 uppercase tracking-widest mb-2">
-                          Bərpa olunur
+                          Recovery
                         </p>
                         <p className="text-2xl font-black bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
                           +{formatAzn(rec.expectedRecovery)}
@@ -104,7 +104,7 @@ export default async function RecommendationsPage() {
                       {/* Loss */}
                       <div className="bg-gradient-to-br from-rose-500/20 to-pink-500/20 rounded-xl p-4 border border-rose-400/30 backdrop-blur">
                         <p className="text-xs text-rose-300 uppercase tracking-widest mb-2">
-                          İtki riski
+                          Loss risk
                         </p>
                         <p className="text-2xl font-black bg-gradient-to-r from-rose-300 to-pink-300 bg-clip-text text-transparent">
                           {formatAzn(expectedLoss)}

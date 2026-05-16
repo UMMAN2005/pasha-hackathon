@@ -41,7 +41,7 @@ export function BidPanel({
 
   const handleBid = async () => {
     if (pricePerUnit < minNextBid) {
-      setError(`Təklif ən azı ${formatAzn(minNextBid)}/ədəd olmalıdır`);
+      setError(`Minimum bid is ${formatAzn(minNextBid)}/qty`);
       return;
     }
 
@@ -58,7 +58,7 @@ export function BidPanel({
     setLoading(false);
 
     if (result.ok) {
-      setSuccess("✦ Təklifiniz qəbul edildi!");
+      setSuccess("Your bid is now leading!");
       setPricePerUnit(minNextBid);
       setQuantity(1);
       setTimeout(() => {
@@ -73,13 +73,13 @@ export function BidPanel({
     <div className="sticky top-24 space-y-4">
       <GlassCard className="p-6">
         <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-4">
-          Təklif Ver
+          Place bid
         </p>
 
         <div className="space-y-4">
           <div>
             <label className="text-xs font-bold text-slate-900 block mb-2">
-              Qiymət / Ədəd (qəpik)
+              Price per qty (qapik)
             </label>
             <div className="flex gap-2">
               <input
@@ -99,7 +99,7 @@ export function BidPanel({
 
           <div>
             <label className="text-xs font-bold text-slate-900 block mb-2">
-              Miqdar (ədəd)
+              Quantity (qty)
             </label>
             <input
               type="number"
@@ -114,7 +114,7 @@ export function BidPanel({
           </div>
 
           <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-            <p className="text-xs text-[var(--ink-soft)] mb-1">Cəmi məbləğ</p>
+            <p className="text-xs text-[var(--ink-soft)] mb-1">Total</p>
             <p className="text-2xl font-black text-slate-900">
               {formatAzn(total)}
             </p>
@@ -137,23 +137,23 @@ export function BidPanel({
             disabled={loading}
             className="btn-grad w-full py-3 text-sm font-bold rounded-xl disabled:opacity-50"
           >
-            {loading ? "Göndərilir..." : "Təklif ver"}
+            {loading ? "Processing…" : "Place bid"}
           </button>
         </div>
       </GlassCard>
 
       <GlassCard className="p-4">
         <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-3">
-          Məlumat
+          Details
         </p>
         <div className="space-y-2 text-xs text-slate-600">
           <div className="flex justify-between">
-            <span>Sorğu qiyməti:</span>
+            <span>Ask price:</span>
             <span className="font-semibold text-slate-900">{formatAzn(askPrice)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Mövcud miqdar:</span>
-            <span className="font-semibold text-slate-900">{qty} ədəd</span>
+            <span>Available qty:</span>
+            <span className="font-semibold text-slate-900">{qty} qty</span>
           </div>
         </div>
       </GlassCard>

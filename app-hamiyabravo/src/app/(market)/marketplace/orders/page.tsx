@@ -9,7 +9,7 @@ export default async function OrdersPage() {
   if (!user.companyId) {
     return (
       <GlassCard className="p-12 text-center">
-        <p className="text-sm text-slate-600">Şirkət seçilməyib</p>
+        <p className="text-sm text-slate-600">No company selected</p>
       </GlassCard>
     );
   }
@@ -20,10 +20,10 @@ export default async function OrdersPage() {
   ]);
 
   const bidStatusMap = {
-    LEADING: { tone: "ok", label: "Lider" },
-    OUTBID: { tone: "bad", label: "Üstələnib" },
-    WON: { tone: "ok", label: "Qazandı" },
-    LOST: { tone: "bad", label: "İtirdi" },
+    LEADING: { tone: "ok", label: "Leading" },
+    OUTBID: { tone: "bad", label: "Outbid" },
+    WON: { tone: "ok", label: "Won" },
+    LOST: { tone: "bad", label: "Lost" },
   } as const;
 
   return (
@@ -31,8 +31,8 @@ export default async function OrdersPage() {
       {bids.length > 0 && (
         <div className="space-y-6">
           <SectionTitle
-            kicker="CANLI HƏRRAC"
-            title="Mənim Təkliflərim"
+            kicker="LIVE AUCTIONS"
+            title="My bids"
             className="px-1"
           />
 
@@ -45,7 +45,7 @@ export default async function OrdersPage() {
                       {bid.listingTitle}
                     </h3>
                     <p className="text-xs text-[var(--ink-soft)] mt-1">
-                      {bid.quantity} ədəd × {formatAzn(bid.pricePerUnit)}/ədəd
+                      {bid.quantity} qty × {formatAzn(bid.pricePerUnit)}/qty
                     </p>
                   </div>
                   <Pill tone={bidStatusMap[bid.status].tone}>
@@ -53,7 +53,7 @@ export default async function OrdersPage() {
                   </Pill>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-3">
-                  <p className="text-xs text-[var(--ink-soft)] mb-1">Cəmi məbləğ</p>
+                  <p className="text-xs text-[var(--ink-soft)] mb-1">Total</p>
                   <p className="text-lg font-black text-slate-900">
                     {formatAzn(bid.total)}
                   </p>
@@ -67,8 +67,8 @@ export default async function OrdersPage() {
       {orders.length > 0 && (
         <div className="space-y-6">
           <SectionTitle
-            kicker="TAMAMLANMIŞ"
-            title="Qaldırış Kodlarım"
+            kicker="COMPLETED"
+            title="My pickup codes"
             className="px-1"
           />
 
@@ -78,19 +78,19 @@ export default async function OrdersPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
-                      Məhsul
+                      Product
                     </p>
                     <p className="text-sm font-bold text-slate-900">
                       {order.productTitle}
                     </p>
                     <p className="text-xs text-[var(--ink-soft)] mt-2">
-                      {order.quantity} ədəd × {formatAzn(Math.round(order.totalAmount / order.quantity))}/ədəd
+                      {order.quantity} qty × {formatAzn(Math.round(order.totalAmount / order.quantity))}/qty
                     </p>
                   </div>
 
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
-                      Qaldırış Kodu
+                      Pickup code
                     </p>
                     <div
                       className="bg-brand text-white px-4 py-3 rounded-lg font-mono font-black text-xl text-center"
@@ -102,7 +102,7 @@ export default async function OrdersPage() {
 
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
-                      Cəmi Məbləğ
+                      Total amount
                     </p>
                     <p className="text-xl font-black text-slate-900">
                       {formatAzn(order.totalAmount)}
@@ -111,7 +111,7 @@ export default async function OrdersPage() {
 
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)] mb-2">
-                      Qaldırış Pəncərəsi
+                      Pickup window
                     </p>
                     <p className="text-sm text-slate-900 font-semibold">
                       {order.pickupStart.toLocaleDateString("az")} —{" "}
@@ -131,10 +131,10 @@ export default async function OrdersPage() {
                     }
                   >
                     {order.status === "RESERVED"
-                      ? "Qaldırış Gözləmədə"
+                      ? "Awaiting pickup"
                       : order.status === "PICKED_UP"
-                        ? "Qaldırıldı"
-                        : "Ləğv Edilib"}
+                        ? "Picked up"
+                        : "Cancelled"}
                   </Pill>
                 </div>
               </GlassCard>
@@ -145,7 +145,7 @@ export default async function OrdersPage() {
 
       {bids.length === 0 && orders.length === 0 && (
         <GlassCard className="p-12 text-center">
-          <p className="text-sm text-slate-600">Hələ təklif və ya sifariş yoxdur</p>
+          <p className="text-sm text-slate-600">No bids or orders yet</p>
         </GlassCard>
       )}
     </div>

@@ -11,14 +11,14 @@ export default async function InventoryListPage() {
   return (
     <div className="p-8 space-y-8">
       <SectionTitle
-        kicker="📦 Risk Siyahısı"
-        title="Müəyyən edilmiş məhsullar"
+        kicker="Risk management"
+        title="Risk inventory"
         className="mb-2"
       />
 
       {batches.length === 0 ? (
         <GlassCard className="p-12 text-center" rise>
-          <p className="text-white text-lg">Heç bir məhsul tapılmadı</p>
+          <p className="text-white text-lg">No products found</p>
         </GlassCard>
       ) : (
         <div className="grid gap-4">
@@ -43,10 +43,10 @@ export default async function InventoryListPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-bold text-white truncate group-hover:text-violet-200">
+                        <h3 className="text-base font-bold text-white truncate group-hover:text-emerald-200">
                           {batch.product}
                         </h3>
-                        <p className="text-xs text-violet-300 mt-1">
+                        <p className="text-xs text-emerald-300 mt-1">
                           {batch.sku} • {batch.branch}
                         </p>
                       </div>
@@ -56,26 +56,26 @@ export default async function InventoryListPage() {
                     {/* Stats row */}
                     <div className="flex gap-6 mt-3 pt-3 border-t border-white/10">
                       <div>
-                        <p className="text-xs text-violet-400">Miqdar</p>
+                        <p className="text-xs text-emerald-400">Quantity</p>
                         <p className="text-sm font-bold text-white">
                           {batch.quantity}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-violet-400">Müddət</p>
+                        <p className="text-xs text-emerald-400">Expiry</p>
                         <p className="text-sm font-bold text-white">
-                          {batch.daysToExpiry} gün
+                          {batch.daysToExpiry} days
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-violet-400">İtki Riski</p>
+                        <p className="text-xs text-emerald-400">Loss risk</p>
                         <p className="text-sm font-bold bg-gradient-to-r from-rose-300 to-pink-300 bg-clip-text text-transparent">
                           {formatAzn(batch.expectedLoss)}
                         </p>
                       </div>
                       <div className="flex-1 text-right">
-                        <p className="text-xs text-violet-400">Tövsiyə</p>
-                        <p className="text-xs text-violet-100 truncate">
+                        <p className="text-xs text-emerald-400">Recommendation</p>
+                        <p className="text-xs text-emerald-100 truncate">
                           {batch.recommendedAction.substring(0, 50)}...
                         </p>
                       </div>

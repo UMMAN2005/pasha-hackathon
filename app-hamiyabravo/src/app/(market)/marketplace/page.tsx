@@ -20,23 +20,23 @@ export default async function MarketplacePage() {
           <div className="animate-float absolute -bottom-20 -right-20 w-80 h-80 rounded-full blur-3xl" style={{ animationDelay: "1.2s" }} />
         </div>
         <div className="relative">
-          <p className="text-sm font-bold uppercase tracking-widest text-white/70 mb-2">Canlı Hərrac Dəyəri</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-white/70 mb-2">Live auction value</p>
           <p className="text-5xl font-black text-white mb-1">
             <AnimatedNumber value={totalLiveValue} qapik suffix=" ₼" />
           </p>
-          <p className="text-sm text-white/60">{auctions.length} açıq hərrac</p>
+          <p className="text-sm text-white/60">{auctions.length} live auctions</p>
         </div>
       </div>
 
       <SectionTitle
-        kicker="CANLI HƏRRAC"
-        title="Ən Yüksək Təkliflər"
+        kicker="LIVE AUCTIONS"
+        title="Top bids"
         className="px-1"
       />
 
       {auctions.length === 0 ? (
         <GlassCard className="p-8 text-center">
-          <p className="text-sm text-slate-600">Hələ sağlam hərrac yoxdur</p>
+          <p className="text-sm text-slate-600">No active auctions yet</p>
         </GlassCard>
       ) : (
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -58,7 +58,7 @@ export default async function MarketplacePage() {
                   />
                   {auction.discountPercent > 0 && (
                     <div className="absolute top-3 right-3 bg-brand px-3 py-1 rounded-full text-xs font-black text-white shadow-lg">
-                      −{auction.discountPercent}%
+                      −{auction.discountPercent}% off
                     </div>
                   )}
                 </div>
@@ -76,7 +76,7 @@ export default async function MarketplacePage() {
                   <div className="mt-4 pt-4 border-t border-slate-200">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-xs font-bold uppercase tracking-widest text-[var(--ink-soft)]">
-                        Cari ən yüksək təklif
+                        Top bid
                       </span>
                       <div className="live-dot w-2 h-2 rounded-full bg-[var(--bad)]" />
                     </div>
@@ -88,7 +88,7 @@ export default async function MarketplacePage() {
                       />
                     </p>
                     <p className="text-xs text-[var(--ink-soft)] mt-1">
-                      {auction.bidCount} təklif
+                      {auction.bidCount} bids
                     </p>
                   </div>
 
@@ -97,12 +97,12 @@ export default async function MarketplacePage() {
                       {formatAzn(auction.askPrice)}
                     </span>
                     <span className="px-2 py-1 bg-slate-100 rounded text-slate-700 font-semibold">
-                      {auction.qty} ədəd
+                      {auction.qty} qty
                     </span>
                   </div>
 
                   <button className="btn-grad mt-4 w-full py-2.5 text-sm font-bold rounded-xl transition">
-                    Təklif ver
+                    Place bid
                   </button>
                 </div>
               </GlassCard>

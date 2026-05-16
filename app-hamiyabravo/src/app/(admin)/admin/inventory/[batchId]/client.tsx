@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 import { explainRecommendation } from "@/server/ai/explain";
 import { formatAzn } from "@/lib/money";
 import { GlassCard } from "@/components/ui/kit";
@@ -33,7 +33,7 @@ export function BatchDetailClient(props: BatchDetailClientProps) {
         product: props.product,
         qty: props.quantity,
         daysToExpiry: props.daysToExpiry,
-        riskBand: `${props.riskScore} (Kritik)`,
+        riskBand: `${props.riskScore} (Critical)`,
         expectedLoss: formatAzn(props.expectedLoss),
         expectedRecovery: formatAzn(props.recommendation.expectedRecovery),
       }
@@ -49,9 +49,12 @@ export function BatchDetailClient(props: BatchDetailClientProps) {
         onClick={handleExplain}
         className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
-        <span className="font-bold text-white">❓ Niyə?</span>
+        <span className="font-bold text-white flex items-center gap-2">
+          <HelpCircle className="h-5 w-5" />
+          Why?
+        </span>
         <ChevronDown
-          className={`w-5 h-5 text-violet-300 transition-transform ${
+          className={`w-5 h-5 text-emerald-300 transition-transform ${
             explainOpen ? "rotate-180" : ""
           }`}
         />
@@ -59,14 +62,14 @@ export function BatchDetailClient(props: BatchDetailClientProps) {
       {explainOpen && (
         <div className="px-6 pb-4 border-t border-white/10 pt-4 space-y-3">
           {loading ? (
-            <p className="text-violet-200 animate-pulse">Yüklənir...</p>
+            <p className="text-emerald-200 animate-pulse">Loading...</p>
           ) : (
-            <p className="text-violet-100 leading-relaxed">{explanation}</p>
+            <p className="text-emerald-100 leading-relaxed">{explanation}</p>
           )}
           <div className="pt-3 border-t border-white/10">
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-lg p-3 border border-emerald-400/30">
-                <p className="text-xs text-emerald-300 uppercase tracking-widest mb-1">Bərpa</p>
+                <p className="text-xs text-emerald-300 uppercase tracking-widest mb-1">Recovery</p>
                 <p className="font-bold text-emerald-200">
                   +{formatAzn(props.recommendation.expectedRecovery)}
                 </p>

@@ -8,6 +8,7 @@ import { listAuctions, getAuction } from "@/server/services/auction";
 import { productImage } from "@/lib/product-images";
 import { formatAzn } from "@/lib/money";
 import { GlassCard, ProductThumb, AIBadge, SectionTitle } from "@/components/ui/kit";
+import { Package, MapPin, Trophy, AlertCircle } from "lucide-react";
 import type { AuctionCard, AuctionDetail } from "@/server/services/auction";
 import type { BidAdvice } from "@/server/ai/insights";
 
@@ -49,7 +50,7 @@ export default function ListingsPage() {
 
   const handleConfirmPickup = async () => {
     if (!pickupCode.trim()) {
-      setError("Qaldırış kodunu daxil edin");
+      setError("Enter pickup code");
       return;
     }
 
@@ -60,11 +61,11 @@ export default function ListingsPage() {
     const result = await confirmPickupAction({ pickupCode });
 
     if (result.ok) {
-      setSuccess(`Qaldırış qəbul edildi: ${pickupCode}`);
+      setSuccess(`Pickup confirmed: ${pickupCode}`);
       setPickupCode("");
       router.refresh();
     } else {
-      setError(result.error || "Xəta baş verdi");
+      setError(result.error || "An error occurred");
     }
 
     setLoading(false);
@@ -74,7 +75,7 @@ export default function ListingsPage() {
     setLoading(true);
     const result = await acceptBidAction({ bidId });
     if (result.ok) {
-      setSuccess(`Hərrac bağlandı! Kod: ${result.pickupCode}`);
+      setSuccess(`Auction closed! Code: ${result.pickupCode}`);
       router.refresh();
     } else {
       setError(result.error);
@@ -88,12 +89,13 @@ export default function ListingsPage() {
       <div className="animate-fade-up">
         <GlassCard className="p-6 border border-emerald-200/20" rise>
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            📦 Qaldırışı Təsdiqlə
+            <Package className="h-5 w-5" />
+            Confirm pickup
           </h2>
           <div className="flex gap-3">
             <input
               type="text"
-              placeholder="Qaldırış kodu (məs: ABC123)"
+              placeholder="Pickup code (e.g. ABC123)"
               value={pickupCode}
               onChange={(e) => setPickupCode(e.target.value.toUpperCase())}
               maxLength={6}
@@ -106,7 +108,7 @@ export default function ListingsPage() {
               className="btn-grad text-white font-bold px-6 py-2 rounded-lg hover:scale-105 transition-transform disabled:opacity-50"
               data-testid="pickup-submit"
             >
-              {loading ? "⋯" : "Təsdiqlə"}
+              {loading ? "..." : "Confirm"}
             </button>
           </div>
           {error && (
@@ -121,19 +123,19 @@ export default function ListingsPage() {
       {/* Auctions Section */}
       <div className="space-y-6 animate-fade-up delay-1">
         <SectionTitle
-          kicker="✦ Hərrac Mərkəzi"
-          title="Cari Siyahılar"
+          kicker="Auction center"
+          title="Active listings"
           className="mb-4"
         />
 
         {loadingListings ? (
           <GlassCard className="p-12 text-center" rise>
-            <p className="text-violet-200 animate-pulse">Siyahılar yüklənir...</p>
+            <p className="text-emerald-200 animate-pulse">Loading listings...</p>
           </GlassCard>
         ) : auctions.length === 0 ? (
           <GlassCard className="p-12 text-center" rise>
-            <p className="text-white text-lg">Cari siyahı yoxdur</p>
-            <p className="text-violet-300 text-sm mt-2">Yeni siyahılar tez əlavə olunacaq</p>
+            <p className="text-white text-lg">No active listings</p>
+            <p className="text-emerald-300 text-sm mt-2">New listings coming soon</p>
           </GlassCard>
         ) : (
           <div className="grid gap-5">
@@ -164,21 +166,24 @@ export default function ListingsPage() {
                           <h3 className="font-bold text-white text-sm line-clamp-2">
                             {auction.title}
                           </h3>
-                          <p className="text-xs text-violet-300 mt-1">📍 {auction.city}</p>
+                          <p className="text-xs text-emerald-300 mt-1 flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {auction.city}
+                          </p>
                         </div>
                       </div>
 
                       {/* Prices & Info */}
                       <div className="col-span-1 space-y-3">
                         <div>
-                          <p className="text-xs text-violet-400 uppercase tracking-widest">Мінімум</p>
+                          <p className="text-xs text-emerald-400 uppercase tracking-widest">Minimum</p>
                           <p className="text-lg font-bold text-white">
                             {formatAzn(auction.askPrice)}
                           </p>
                           <p className="text-xs text-emerald-300">-{auction.discountPercent}%</p>
                         </div>
                         <div>
-                          <p className="text-xs text-violet-400 uppercase tracking-widest">Мiqdar</p>
+                          <p className="text-xs text-emerald-400 uppercase tracking-widest">Quantity</p>
                           <p className="text-lg font-bold text-white">
                             {auction.qty}
                           </p>
@@ -187,11 +192,13 @@ export default function ListingsPage() {
 
                       {/* Bid Leaderboard */}
                       <div className="col-span-1 space-y-2">
-                        <p className="text-xs text-violet-400 uppercase tracking-widest font-bold">
-                          💰 Tərəfindən ({auction.bidCount})
+                        <p className="text-xs text-emerald-400 uppercase tracking-widest font-bold">
+                          Bids ({auction.bidCount})
                         </p>
                         {detail?.bids.slice(0, 3).map((bid, bidIdx) => {
                           const isRecommended = recommendedBid?.id === bid.id;
+                          const medals = [Trophy, Trophy, Trophy];
+                          const Medal = medals[bidIdx] || Trophy;
                           return (
                             <div
                               key={bid.id}
@@ -202,17 +209,23 @@ export default function ListingsPage() {
                               }`}
                             >
                               <div className="text-xs font-bold w-5">
-                                {bidIdx === 0 ? "🥇" : bidIdx === 1 ? "🥈" : "🥉"}
+                                {bidIdx === 0 ? (
+                                  <Trophy className="h-4 w-4 text-yellow-400" />
+                                ) : bidIdx === 1 ? (
+                                  <Trophy className="h-4 w-4 text-gray-300" />
+                                ) : (
+                                  <Trophy className="h-4 w-4 text-orange-600" />
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-white truncate">
                                   {bid.buyerName}
                                 </p>
-                                <p className="text-xs text-violet-300">
-                                  {formatAzn(bid.pricePerUnit)}/ədəd
+                                <p className="text-xs text-emerald-300">
+                                  {formatAzn(bid.pricePerUnit)}/unit
                                 </p>
                               </div>
-                              {isRecommended && <span className="text-xs">✦</span>}
+                              {isRecommended && <AlertCircle className="h-3 w-3 text-emerald-400" />}
                             </div>
                           );
                         })}
@@ -221,11 +234,11 @@ export default function ListingsPage() {
                       {/* AI Advice & Actions */}
                       <div className="col-span-1 space-y-3 flex flex-col">
                         {advice && recommendedBid && (
-                          <div className="bg-violet-500/20 border border-violet-400/30 rounded-lg p-3 flex-1 space-y-2">
+                          <div className="bg-emerald-500/20 border border-emerald-400/30 rounded-lg p-3 flex-1 space-y-2">
                             <div className="flex items-center gap-2">
-                              <AIBadge label="Seçim" />
+                              <AIBadge label="Pick" />
                             </div>
-                            <p className="text-xs text-violet-200 leading-tight">
+                            <p className="text-xs text-emerald-200 leading-tight">
                               {advice.reasoning}
                             </p>
                             <button
@@ -233,7 +246,7 @@ export default function ListingsPage() {
                               disabled={loading}
                               className="w-full mt-2 btn-grad text-white text-sm font-bold py-2 rounded-lg hover:scale-105 transition-transform disabled:opacity-50"
                             >
-                              {loading ? "⋯" : "✦ Qəbul et"}
+                              {loading ? "..." : "Accept"}
                             </button>
                           </div>
                         )}
@@ -247,7 +260,7 @@ export default function ListingsPage() {
                               disabled={loading}
                               className="text-xs px-3 py-2 border border-white/20 text-white rounded-lg hover:border-white/40 hover:bg-white/5 disabled:opacity-50 transition-all"
                             >
-                              Qəbul Et
+                              Accept
                             </button>
                           ) : null
                         ))}

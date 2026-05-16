@@ -8,10 +8,13 @@ import {
   ShoppingCart,
   ClipboardList,
   Gavel,
-  Sparkles,
+  MapPinned,
   LogOut,
+  Leaf,
 } from "lucide-react";
 import { AiChat } from "./ai-chat";
+import { AiTicker } from "./ai-ticker";
+import { LanguageSelector } from "./language-selector";
 
 interface AppShellProps {
   surface: "admin" | "marketplace";
@@ -31,15 +34,16 @@ export function AppShell({
   const navItems =
     surface === "admin"
       ? [
-          { label: "Baxış", icon: LayoutDashboard, href: "/admin" },
+          { label: "Overview", icon: LayoutDashboard, href: "/admin" },
           { label: "Risk", icon: AlertTriangle, href: "/admin/inventory" },
-          { label: "Hərrac", icon: Gavel, href: "/admin/listings" },
+          { label: "Branches", icon: MapPinned, href: "/admin/branches" },
+          { label: "Auction", icon: Gavel, href: "/admin/listings" },
           { label: "Audit", icon: ClipboardList, href: "/admin/audit" },
         ]
       : [
-          { label: "Bazar", icon: ShoppingCart, href: "/marketplace" },
+          { label: "Market", icon: ShoppingCart, href: "/marketplace" },
           {
-            label: "Sifarişlərim",
+            label: "My Orders",
             icon: ClipboardList,
             href: "/marketplace/orders",
           },
@@ -47,11 +51,10 @@ export function AppShell({
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
       <aside className="glass-dark relative z-10 flex w-64 flex-col">
         <div className="flex h-20 items-center gap-2 px-6">
-          <div className="bg-brand grid h-9 w-9 place-items-center rounded-xl text-lg font-black text-white shadow-lg">
-            B
+          <div className="bg-brand grid h-9 w-9 place-items-center rounded-xl text-white shadow-lg">
+            <Leaf className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-lg font-extrabold leading-none text-white">
@@ -100,28 +103,17 @@ export function AppShell({
             className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4" />
-            Rol dəyişdir
+            Switch role
           </Link>
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        <header className="glass z-10 flex h-20 items-center justify-between px-8">
-          <div className="flex items-center gap-3">
-            <span className="live-dot inline-block h-2.5 w-2.5 rounded-full bg-rose-500" />
-            <p className="text-sm font-semibold text-[var(--ink-soft)]">
-              {surface === "admin"
-                ? "Əməliyyat mərkəzi — canlı"
-                : "B2B Bazar — canlı hərrac"}
-            </p>
+        <header className="glass z-10 flex h-20 items-center justify-between gap-6 px-8">
+          <div className="min-w-0 flex-1">
+            <AiTicker surface={surface} />
           </div>
-          {surface === "admin" && (
-            <div className="ai-pill flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold">
-              <Sparkles className="h-4 w-4" />
-              Gemini AI aktiv
-            </div>
-          )}
+          <LanguageSelector />
         </header>
 
         <div className="flex-1 overflow-auto p-8">{children}</div>

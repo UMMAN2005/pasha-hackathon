@@ -1,7 +1,7 @@
 export default function AdminLoading() {
   return (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-12 animate-pulse">
+    <div className="space-y-8 p-8">
+      <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-2xl p-12 animate-pulse">
         <div className="h-6 bg-slate-200 rounded w-32 mb-4"></div>
         <div className="h-12 bg-slate-200 rounded w-48"></div>
       </div>

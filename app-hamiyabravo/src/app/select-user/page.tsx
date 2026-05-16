@@ -1,83 +1,87 @@
 import { prisma } from "@/lib/db";
 import { selectUserAction } from "./actions";
 import { GlassCard } from "@/components/ui/kit";
-
-const roleEmojis: Record<string, string> = {
-  HQ_ADMIN: "🎯",
-  BRANCH_MANAGER: "🏪",
-  BUSINESS_BUYER: "🤝",
-  INVENTORY_OFFICER: "📦",
-  SUPER_ADMIN: "👑",
-};
+import { LanguageSelector } from "@/components/language-selector";
+import { ShieldCheck, Store, ArrowRight, Leaf } from "lucide-react";
 
 export default async function SelectUserPage() {
-  const users = await prisma.user.findMany({
-    include: { branch: true, company: true },
-    orderBy: { name: "asc" },
+  const admin =
+    (await prisma.user.findFirst({ where: { role: "HQ_ADMIN" } })) ??
+    (await prisma.user.findFirst({ where: { role: "BRANCH_MANAGER" } }));
+  const buyer = await prisma.user.findFirst({
+    where: { role: "BUSINESS_BUYER" },
+    include: { company: true },
   });
 
+  const options = [
+    {
+      id: admin?.id,
+      icon: ShieldCheck,
+      title: "Bravo Admin",
+      subtitle: "Operations & AI control center",
+      desc: "Predict waste, run auctions, supervise Bravo AI.",
+    },
+    {
+      id: buyer?.id,
+      icon: Store,
+      title: "Restaurant / Buyer",
+      subtitle: buyer?.company?.legalName ?? "B2B partner",
+      desc: "Browse live surplus auctions and place bids.",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-slate-950 to-slate-900 flex flex-col items-center justify-center p-4">
-      {/* Animated background glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 opacity-10 blur-3xl animate-float"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 rounded-full bg-gradient-to-br from-pink-400 to-violet-600 opacity-10 blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-6">
+      <div className="absolute right-6 top-6">
+        <div className="glass-dark rounded-2xl p-1">
+          <LanguageSelector />
+        </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-2xl space-y-12">
-        {/* Hero Section */}
-        <div className="text-center space-y-3 animate-fade-up">
-          <h1 className="text-6xl font-black bg-gradient-to-r from-orange-300 via-pink-300 to-violet-300 bg-clip-text text-transparent">
-            HamıyaBravo
+      <div className="w-full max-w-3xl space-y-12">
+        <div className="animate-fade-up space-y-4 text-center">
+          <div className="bg-brand mx-auto grid h-16 w-16 place-items-center rounded-2xl text-white shadow-xl">
+            <Leaf className="h-8 w-8" />
+          </div>
+          <h1 className="text-6xl font-black">
+            Hamıya<span className="text-gradient">Bravo</span>
           </h1>
-          <p className="text-xl text-violet-200">Zəka ilə tezlik zəbulları</p>
+          <p className="text-lg font-medium text-[var(--ink-soft)]">
+            AI that turns supermarket waste into recovered money, meals and
+            saved CO₂.
+          </p>
         </div>
 
-        {/* User Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-up delay-1">
-          {users.map((user) => (
-            <form key={user.id} action={selectUserAction}>
-              <input type="hidden" name="userId" value={user.id} />
-              <button
-                type="submit"
-                className="w-full group"
-              >
-                <GlassCard
-                  className="p-6 text-left hover:shadow-2xl transition-all duration-300 group-hover:scale-105 cursor-pointer border border-white/10 hover:border-white/30"
-                  rise={false}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="text-4xl">{roleEmojis[user.role] || "👤"}</div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white">
-                          {user.name}
-                        </h3>
-                        <p className="text-sm text-violet-200">
-                          {user.role === "HQ_ADMIN" ? "Baş Müdür" :
-                           user.role === "BRANCH_MANAGER" ? "Şubə Rəhbəri" :
-                           user.role === "BUSINESS_BUYER" ? "Alıcı" :
-                           user.role === "INVENTORY_OFFICER" ? "Ehtiyat Xidməti" :
-                           "Admin"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                      <span className="text-xs text-violet-300 font-mono">
-                        {user.company?.legalName || user.branch?.name || "—"}
-                      </span>
-                    </div>
+        <div className="grid animate-fade-up gap-6 delay-1 md:grid-cols-2">
+          {options.map((o) => (
+            <form key={o.title} action={selectUserAction}>
+              <input type="hidden" name="userId" value={o.id ?? ""} />
+              <button type="submit" className="group block w-full text-left">
+                <GlassCard className="card-rise h-full p-8">
+                  <div className="bg-brand mb-6 grid h-14 w-14 place-items-center rounded-2xl text-white shadow-lg">
+                    <o.icon className="h-7 w-7" />
                   </div>
+                  <h2 className="text-2xl font-extrabold text-[var(--ink)]">
+                    {o.title}
+                  </h2>
+                  <p className="mt-1 text-sm font-bold uppercase tracking-wide text-emerald-600">
+                    {o.subtitle}
+                  </p>
+                  <p className="mt-3 text-sm text-[var(--ink-soft)]">
+                    {o.desc}
+                  </p>
+                  <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--ink)] transition-transform group-hover:translate-x-1">
+                    Enter <ArrowRight className="h-4 w-4" />
+                  </span>
                 </GlassCard>
               </button>
             </form>
           ))}
         </div>
 
-        {/* Footer hint */}
-        <div className="text-center text-sm text-violet-300 animate-fade-up delay-2">
-          Rolu seçin və demoyu başlayın
-        </div>
+        <p className="animate-fade-up text-center text-sm text-[var(--ink-soft)] delay-2">
+          Choose a role to start the demo
+        </p>
       </div>
     </div>
   );
