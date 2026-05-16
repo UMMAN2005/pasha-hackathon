@@ -23,38 +23,40 @@ export function AiTicker({ surface }: { surface: "admin" | "marketplace" }) {
   const tips = surface === "admin" ? ADMIN_TIPS : MARKET_TIPS;
   const [idx, setIdx] = useState(0);
   const [len, setLen] = useState(0);
-  const tipRef = useRef(tips);
-  tipRef.current = tips;
+  const ref = useRef(tips);
+  ref.current = tips;
 
   useEffect(() => {
-    const full = tipRef.current[idx];
+    const full = ref.current[idx];
     if (len < full.length) {
-      const t = setTimeout(() => setLen((l) => l + 1), 28);
+      const t = setTimeout(() => setLen((l) => l + 1), 26);
       return () => clearTimeout(t);
     }
     const hold = setTimeout(() => {
       setLen(0);
-      setIdx((i) => (i + 1) % tipRef.current.length);
-    }, 2600);
+      setIdx((i) => (i + 1) % ref.current.length);
+    }, 2800);
     return () => clearTimeout(hold);
   }, [len, idx]);
 
-  const text = tips[idx].slice(0, len);
-
   return (
-    <div className="flex items-center gap-3 overflow-hidden">
-      <span className="bg-brand flex h-8 w-8 flex-none items-center justify-center rounded-xl text-white shadow-sm">
-        <Sparkles className="h-4 w-4" />
+    <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-emerald-200/70 bg-white/60 px-4 py-2.5 shadow-sm backdrop-blur">
+      <span className="bg-brand grid h-9 w-9 flex-none place-items-center rounded-xl text-white shadow">
+        <Sparkles className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-600">
-          Bravo&nbsp;AI&nbsp;·&nbsp;live recommendation
-        </p>
-        <p className="truncate text-sm font-semibold text-[var(--ink)]">
-          {text}
-          <span className="ml-0.5 inline-block w-[2px] animate-pulse bg-emerald-500 align-middle">
-            &nbsp;
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-extrabold tracking-wide text-emerald-700">
+            Bravo&nbsp;AI
           </span>
+          <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+            <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Live
+          </span>
+        </div>
+        <p className="truncate text-sm font-semibold text-[var(--ink)]">
+          {tips[idx].slice(0, len)}
+          <span className="ml-px inline-block h-3.5 w-0.5 -translate-y-px animate-pulse rounded bg-emerald-500 align-middle" />
         </p>
       </div>
     </div>

@@ -24,6 +24,7 @@ interface AppShellProps {
   children: React.ReactNode;
   userName?: string;
   userRole?: string;
+  queueCount?: number;
 }
 
 export function AppShell({
@@ -31,6 +32,7 @@ export function AppShell({
   children,
   userName,
   userRole,
+  queueCount = 0,
 }: AppShellProps) {
   const pathname = usePathname();
 
@@ -94,7 +96,19 @@ export function AppShell({
                 }`}
               >
                 <item.icon className="h-5 w-5" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.href === "/admin/recommendations" &&
+                  queueCount > 0 && (
+                    <span
+                      className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-extrabold ${
+                        active
+                          ? "bg-white/25 text-white"
+                          : "bg-rose-500 text-white"
+                      }`}
+                    >
+                      {queueCount}
+                    </span>
+                  )}
               </Link>
             );
           })}

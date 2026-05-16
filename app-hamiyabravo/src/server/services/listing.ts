@@ -50,6 +50,12 @@ export async function createListingFromRecommendation(
     );
 
     const availableQty = batch.quantityOnHand - batch.quantityReserved;
+    // Sensible wholesale minimum order: ~10% of the lot, clamped 5–25,
+    // never above what's available. This is also the buyer's default qty.
+    const minQty = Math.max(
+      1,
+      Math.min(availableQty, Math.min(25, Math.max(5, Math.round(availableQty * 0.1))))
+    );
 
     const listing = await tx.marketplaceListing.create({
       data: {
@@ -57,7 +63,7 @@ export async function createListingFromRecommendation(
         publicTitle: product.name,
         price: listingPrice,
         discountPercent: discount,
-        minQty: 1,
+        minQty,
         maxQty: availableQty,
         pickupStart: getToday(),
         pickupEnd: new Date(getToday().getTime() + 2 * 24 * 60 * 60 * 1000),

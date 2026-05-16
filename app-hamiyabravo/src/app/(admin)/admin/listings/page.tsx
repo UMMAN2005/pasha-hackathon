@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { confirmPickupAction } from "@/server/actions/confirm-pickup";
 import { acceptBidAction, getBidAdvice } from "@/server/actions/bid";
-import { listAuctions, getAuction } from "@/server/services/auction";
+import { listAuctions, getAuction, getClosedAuctions } from "@/server/services/auction";
 import { productImage } from "@/lib/product-images";
 import { formatAzn } from "@/lib/money";
-import { GlassCard, ProductThumb, AIBadge, SectionTitle } from "@/components/ui/kit";
-import { Package, MapPin, Trophy, AlertCircle } from "lucide-react";
-import type { AuctionCard, AuctionDetail } from "@/server/services/auction";
+import { GlassCard, ProductThumb, AIBadge, SectionTitle, Pill } from "@/components/ui/kit";
+import { Package, MapPin, Trophy, AlertCircle, CheckCircle } from "lucide-react";
+import type { AuctionCard, AuctionDetail, ClosedAuction } from "@/server/services/auction";
 import type { BidAdvice } from "@/server/ai/insights";
 
 export default function ListingsPage() {
@@ -18,6 +18,7 @@ export default function ListingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [auctions, setAuctions] = useState<AuctionCard[]>([]);
+  const [closedAuctions, setClosedAuctions] = useState<ClosedAuction[]>([]);
   const [auctionDetails, setAuctionDetails] = useState<Record<string, AuctionDetail | null>>({});
   const [bidAdvice, setBidAdvice] = useState<Record<string, BidAdvice | null>>({});
   const [loadingListings, setLoadingListings] = useState(true);
@@ -39,6 +40,9 @@ export default function ListingsPage() {
             }
           }
         }
+
+        const closed = await getClosedAuctions();
+        setClosedAuctions(closed);
       } catch (e) {
         console.error("Failed to load auctions", e);
       } finally {
@@ -270,6 +274,106 @@ export default function ListingsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Closed Auctions Section */}
+      <div className="space-y-6 animate-fade-up delay-2">
+        <SectionTitle
+          kicker="Auction center"
+          title={`Auctioned & sold (${closedAuctions.length})`}
+          className="mb-4"
+        />
+
+        {closedAuctions.length === 0 ? (
+          <GlassCard className="p-12 text-center" rise>
+            <CheckCircle className="w-8 h-8 text-slate-400 mx-auto mb-3" />
+            <p className="text-white text-lg font-semibold">No closed auctions yet</p>
+            <p className="text-emerald-300 text-sm mt-1">
+              Completed auctions will appear here
+            </p>
+          </GlassCard>
+        ) : (
+          <div className="grid gap-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-3 px-4 font-bold text-emerald-300">Product</th>
+                    <th className="text-left py-3 px-4 font-bold text-emerald-300">Category · City</th>
+                    <th className="text-left py-3 px-4 font-bold text-emerald-300">Buyer</th>
+                    <th className="text-right py-3 px-4 font-bold text-emerald-300">Unit price</th>
+                    <th className="text-right py-3 px-4 font-bold text-emerald-300">Qty</th>
+                    <th className="text-right py-3 px-4 font-bold text-emerald-300">Total</th>
+                    <th className="text-center py-3 px-4 font-bold text-emerald-300">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {closedAuctions.map((auction) => (
+                    <tr
+                      key={auction.id}
+                      className="border-b border-white/5 hover:bg-white/5 transition"
+                    >
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 flex-shrink-0">
+                            <ProductThumb
+                              src={auction.image}
+                              alt={auction.title}
+                              className="w-full h-full"
+                            />
+                          </div>
+                          <span className="text-white font-semibold truncate">
+                            {auction.title}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <p className="text-emerald-300 text-xs">
+                          {auction.category} · {auction.city}
+                        </p>
+                      </td>
+                      <td className="py-4 px-4">
+                        <p className="text-white font-semibold">
+                          {auction.buyer ?? "—"}
+                        </p>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <p className="text-white font-bold">
+                          {formatAzn(auction.soldPrice)}
+                        </p>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <p className="text-white font-semibold">{auction.qty}</p>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <p className="text-white font-black">
+                          {formatAzn(auction.total)}
+                        </p>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className="flex justify-center">
+                          {auction.status === "RESERVED" ? (
+                            <Pill tone="amber">
+                              Awaiting pickup
+                            </Pill>
+                          ) : auction.pickedUp ? (
+                            <Pill tone="ok">
+                              Completed
+                            </Pill>
+                          ) : (
+                            <Pill tone="amber">
+                              Awaiting pickup
+                            </Pill>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

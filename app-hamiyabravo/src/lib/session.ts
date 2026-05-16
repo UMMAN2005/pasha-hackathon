@@ -97,7 +97,7 @@ export function isBuyer(role: Role): boolean {
 
 export function roleHome(role: Role): string {
   if (isBuyer(role)) {
-    return "/marketplace";
+    return "/marketplace/dashboard";
   }
   return "/admin";
 }

@@ -56,7 +56,14 @@ export default async function MarketplacePage() {
                     alt={auction.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
-                  {auction.discountPercent > 0 && (
+                  {auction.status !== "ACTIVE" && (
+                    <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
+                      <span className="text-sm font-black text-white uppercase tracking-wider">
+                        {auction.status === "RESERVED" ? "Sold" : "Ended"}
+                      </span>
+                    </div>
+                  )}
+                  {auction.discountPercent > 0 && auction.status === "ACTIVE" && (
                     <div className="absolute top-3 right-3 bg-brand px-3 py-1 rounded-full text-xs font-black text-white shadow-lg">
                       −{auction.discountPercent}% off
                     </div>

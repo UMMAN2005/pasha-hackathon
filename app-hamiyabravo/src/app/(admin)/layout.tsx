@@ -25,15 +25,17 @@ export default async function AdminLayout({
     throw err;
   }
 
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: session.userId },
-  });
+  const [user, queueCount] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: session.userId } }),
+    prisma.recommendation.count({ where: { status: "PENDING" } }),
+  ]);
 
   return (
     <AppShell
       surface="admin"
       userName={user.name}
       userRole={user.role}
+      queueCount={queueCount}
     >
       {children}
     </AppShell>

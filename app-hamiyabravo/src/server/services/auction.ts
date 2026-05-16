@@ -31,6 +31,7 @@ export interface AuctionCard {
   topBid: number | null;
   bidCount: number;
   minNextBid: number;
+  minQty: number;
   status: string;
 }
 
@@ -64,6 +65,7 @@ export async function listAuctions(): Promise<AuctionCard[]> {
       topBid: top,
       bidCount: l.bids.length,
       minNextBid: minNextBid(top, l.price),
+      minQty: l.minQty,
       status: l.status,
     };
   });
@@ -120,6 +122,7 @@ export async function getAuction(
     topBid: top,
     bidCount: l.bids.length,
     minNextBid: minNextBid(top, l.price),
+    minQty: l.minQty,
     status: l.status,
     pickupStart: l.pickupStart,
     pickupEnd: l.pickupEnd,
@@ -288,4 +291,50 @@ export async function aiAdviceFor(
       qty: b.quantity,
     }))
   );
+}
+
+export interface ClosedAuction {
+  id: string;
+  title: string;
+  image: string;
+  category: string;
+  city: string;
+  soldPrice: number;
+  qty: number;
+  total: number;
+  buyer: string | null;
+  status: string;
+  pickedUp: boolean;
+}
+
+export async function getClosedAuctions(): Promise<ClosedAuction[]> {
+  const listings = await prisma.marketplaceListing.findMany({
+    where: { status: { in: ["RESERVED", "SOLD"] } },
+    include: {
+      orders: { include: { buyerCompany: true }, orderBy: { createdAt: "desc" } },
+      bids: { where: { status: "WON" }, take: 1 },
+      batch: {
+        include: { product: { include: { category: true } }, branch: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return listings.map((l) => {
+    const order = l.orders[0];
+    const won = l.bids[0];
+    return {
+      id: l.id,
+      title: l.publicTitle,
+      image: productImage(l.batch.product.sku),
+      category: l.batch.product.category.name,
+      city: l.batch.branch.city,
+      soldPrice: won?.pricePerUnit ?? l.price,
+      qty: order?.quantity ?? won?.quantity ?? 0,
+      total: order?.totalAmount ?? (won ? won.pricePerUnit * won.quantity : 0),
+      buyer: order?.buyerCompany.legalName ?? won?.buyerName ?? null,
+      status: l.status,
+      pickedUp: order?.status === "PICKED_UP",
+    };
+  });
 }

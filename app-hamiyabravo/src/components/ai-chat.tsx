@@ -218,6 +218,20 @@ export function AiChat() {
         <div ref={endRef} />
       </div>
 
+      <div className="flex flex-wrap gap-1.5 px-3 pt-2">
+        {STARTERS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => send(s)}
+            disabled={loading}
+            className="ai-pill rounded-full px-3 py-1 text-[11px] font-bold transition hover:scale-[1.03] disabled:opacity-50"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
       <form
         onSubmit={(e) => {
           e.preventDefault();

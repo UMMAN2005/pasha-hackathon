@@ -1,6 +1,7 @@
 // Presentational, server-safe UI kit for the Vibrant theme.
 // No hooks / no "use client" — importable from server and client components.
 import { ReactNode } from "react";
+import { Sparkles } from "lucide-react";
 
 export function GlassCard({
   children,
@@ -23,7 +24,7 @@ export function GlassCard({
 export function AIBadge({ label = "AI" }: { label?: string }) {
   return (
     <span className="ai-pill inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold">
-      <span className="text-sm leading-none">✦</span>
+      <Sparkles className="h-3.5 w-3.5" />
       {label}
     </span>
   );
