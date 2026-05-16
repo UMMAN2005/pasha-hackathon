@@ -100,10 +100,10 @@ export function buildSeedData() {
   const today = getToday();
 
   const branches = [
-    { id: uuidv5("branch-a"), name: "Bravo Branch A", city: "Baku" },
-    { id: uuidv5("branch-b"), name: "Bravo Branch B", city: "Baku" },
-    { id: uuidv5("branch-c"), name: "Bravo Branch C", city: "Ganja" },
-    { id: uuidv5("branch-d"), name: "Bravo Branch D", city: "Sumqayit" },
+    { id: uuidv5("branch-a"), name: "Bravo Branch A", city: "Baku", latitude: 40.4093, longitude: 49.8671 },
+    { id: uuidv5("branch-b"), name: "Bravo Branch B", city: "Baku", latitude: 40.3950, longitude: 49.8820 },
+    { id: uuidv5("branch-c"), name: "Bravo Branch C", city: "Ganja", latitude: 40.6828, longitude: 46.3606 },
+    { id: uuidv5("branch-d"), name: "Bravo Branch D", city: "Sumqayit", latitude: 40.5897, longitude: 49.6686 },
   ];
 
   const categories = [
@@ -121,6 +121,9 @@ export function buildSeedData() {
       legalName: "Bravo MMC",
       verificationStatus: "VERIFIED",
       reliabilityScore: 100,
+      city: "Baku",
+      latitude: 40.4093,
+      longitude: 49.8671,
     },
     {
       id: uuidv5("company-astoria"),
@@ -128,6 +131,9 @@ export function buildSeedData() {
       legalName: "Astoria Hotel",
       verificationStatus: "VERIFIED",
       reliabilityScore: 96,
+      city: "Baku",
+      latitude: 40.3777,
+      longitude: 49.84,
     },
     {
       id: uuidv5("company-nar"),
@@ -135,6 +141,9 @@ export function buildSeedData() {
       legalName: "Restoran Nar & Qrill",
       verificationStatus: "VERIFIED",
       reliabilityScore: 88,
+      city: "Ganja",
+      latitude: 40.67,
+      longitude: 46.37,
     },
     {
       id: uuidv5("company-merkez"),
@@ -142,6 +151,9 @@ export function buildSeedData() {
       legalName: "Kafe Mərkəz",
       verificationStatus: "VERIFIED",
       reliabilityScore: 74,
+      city: "Sumqayit",
+      latitude: 40.585,
+      longitude: 49.672,
     },
   ];
 
@@ -257,6 +269,9 @@ export async function seedDatabase() {
         legalName: company.legalName,
         verificationStatus: company.verificationStatus,
         reliabilityScore: company.reliabilityScore,
+        city: company.city,
+        latitude: company.latitude,
+        longitude: company.longitude,
       },
     });
   }

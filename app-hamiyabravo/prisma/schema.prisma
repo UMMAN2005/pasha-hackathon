@@ -29,6 +29,9 @@ model Company {
   taxId              String?
   verificationStatus String   @default("VERIFIED") // VerificationStatus
   reliabilityScore   Int      @default(100) // 0-100, PRD §6 Buyer Reliability
+  city               String?
+  latitude           Float?
+  longitude          Float?
   users              User[]
   orders             Order[]
   bids               Bid[]

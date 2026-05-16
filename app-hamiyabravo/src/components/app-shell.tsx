@@ -9,6 +9,8 @@ import {
   ClipboardList,
   Gavel,
   MapPinned,
+  Users,
+  Navigation,
   LogOut,
   Leaf,
 } from "lucide-react";
@@ -37,11 +39,18 @@ export function AppShell({
           { label: "Overview", icon: LayoutDashboard, href: "/admin" },
           { label: "Risk", icon: AlertTriangle, href: "/admin/inventory" },
           { label: "Branches", icon: MapPinned, href: "/admin/branches" },
+          { label: "Customers", icon: Users, href: "/admin/customers" },
           { label: "Auction", icon: Gavel, href: "/admin/listings" },
           { label: "Audit", icon: ClipboardList, href: "/admin/audit" },
         ]
       : [
+          { label: "Dashboard", icon: LayoutDashboard, href: "/marketplace/dashboard" },
           { label: "Market", icon: ShoppingCart, href: "/marketplace" },
+          {
+            label: "Nearby",
+            icon: Navigation,
+            href: "/marketplace/nearby",
+          },
           {
             label: "My Orders",
             icon: ClipboardList,
