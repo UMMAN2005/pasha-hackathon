@@ -1,2 +1,0 @@
-description = "Enable or disable hookify rules interactively"
-prompt = "Interactively enable or disable existing hookify rules.\n\n## Steps\n\n1. Find all `.claude/hookify.*.local.md` files\n2. Read the current state of each rule\n3. Present the list with current enabled / disabled status\n4. Ask which rules to toggle\n5. Update the `enabled:` field in the selected rule files\n6. Confirm the changes"
