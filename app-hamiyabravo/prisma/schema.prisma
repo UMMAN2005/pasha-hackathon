@@ -30,7 +30,6 @@ model Company {
   verificationStatus String   @default("VERIFIED") // VerificationStatus
   reliabilityScore   Int      @default(100) // 0-100, PRD §6 Buyer Reliability
   city               String?
-  segment            String? // OfftakerSegment: PROCESSOR | BAKERY_CAFE_FEED | KITCHEN | FOOD_BANK (BUYER only)
   latitude           Float?
   longitude          Float?
   users              User[]
@@ -150,10 +149,6 @@ model MarketplaceListing {
   discountPercent  Int // 0-100
   minQty           Int             @default(1)
   maxQty           Int
-  targetSegment    String? // AI best-match off-taker segment
-  pooledQty        Int? // total qty pooled across branches (null = single-branch)
-  pooledBranches   Int? // count of contributing branches (null/1 = single)
-  donated          Boolean         @default(false) // routed to food-bank tier
   pickupStart      DateTime
   pickupEnd        DateTime
   status           String          @default("ACTIVE") // ListingStatus | AUCTION
