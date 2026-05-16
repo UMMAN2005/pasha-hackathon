@@ -1,4 +1,5 @@
-import { requireRole } from "@/lib/session";
+import { getSession } from "@/lib/session";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getNearbyBranches } from "@/server/services/location";
 import { GlassCard, SectionTitle, Pill } from "@/components/ui/kit";
@@ -16,8 +17,9 @@ async function resolveBuyerId(sessionCompanyId: string | null) {
 }
 
 export default async function NearbyPage() {
-  const user = await requireRole("BUSINESS_BUYER", "HQ_ADMIN");
-  const buyerId = await resolveBuyerId(user.companyId);
+  const session = await getSession();
+  if (!session) redirect("/select-user");
+  const buyerId = await resolveBuyerId(session.companyId);
   if (!buyerId) {
     return <p className="text-[var(--ink-soft)]">No buyer profile.</p>;
   }

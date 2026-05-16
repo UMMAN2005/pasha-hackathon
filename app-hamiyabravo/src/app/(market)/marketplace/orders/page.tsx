@@ -1,12 +1,20 @@
 import { getBuyerBids, getBuyerOrders } from "@/server/services/market";
-import { requireRole } from "@/lib/session";
+import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/db";
+import { redirect } from "next/navigation";
 import { formatAzn } from "@/lib/money";
 import { GlassCard, Pill, SectionTitle } from "@/components/ui/kit";
 
 export default async function OrdersPage() {
-  const user = await requireRole("BUSINESS_BUYER", "HQ_ADMIN");
+  const session = await getSession();
+  if (!session) redirect("/select-user");
 
-  if (!user.companyId) {
+  const companyId =
+    session.companyId ??
+    (await prisma.company.findFirst({ where: { type: "BUYER" } }))?.id ??
+    null;
+
+  if (!companyId) {
     return (
       <GlassCard className="p-12 text-center">
         <p className="text-sm text-slate-600">No company selected</p>
@@ -15,8 +23,8 @@ export default async function OrdersPage() {
   }
 
   const [bids, orders] = await Promise.all([
-    getBuyerBids(user.companyId),
-    getBuyerOrders(user.companyId),
+    getBuyerBids(companyId),
+    getBuyerOrders(companyId),
   ]);
 
   const bidStatusMap = {

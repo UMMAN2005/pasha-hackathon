@@ -29,7 +29,7 @@ export default async function AuditPage() {
 
       {logs.length === 0 ? (
         <GlassCard className="p-12 text-center" rise>
-          <p className="text-white text-lg">No records</p>
+          <p className="text-slate-900 text-lg">No records</p>
         </GlassCard>
       ) : (
         <div className="space-y-3">
@@ -52,13 +52,13 @@ export default async function AuditPage() {
                 className={`animate-fade-up ${idx > 5 ? "" : idx === 0 ? "" : idx === 1 ? "delay-1" : idx === 2 ? "delay-2" : "delay-3"}`}
               >
                 <GlassCard
-                  className="p-4 border border-white/10 hover:border-white/20"
+                  className="p-4 border border-slate-200 hover:border-slate-300"
                   rise={false}
                 >
                   <div className="flex items-center gap-4">
                     {/* Icon */}
                     <div className="flex-shrink-0">
-                      <Icon className="h-6 w-6 text-emerald-400" />
+                      <Icon className="h-6 w-6 text-emerald-700" />
                     </div>
 
                     {/* Content */}
@@ -77,25 +77,25 @@ export default async function AuditPage() {
                       </div>
                       <div className="grid grid-cols-3 gap-4 mt-2 text-xs">
                         <div>
-                          <p className="text-emerald-400 uppercase tracking-widest">Entity ID</p>
-                          <p className="text-white font-mono truncate">
+                          <p className="text-emerald-700 uppercase tracking-widest font-semibold">Entity ID</p>
+                          <p className="text-slate-900 font-mono truncate">
                             {log.entityId.substring(0, 12)}...
                           </p>
                         </div>
                         <div>
-                          <p className="text-emerald-400 uppercase tracking-widest">Type</p>
-                          <p className="text-white">{log.entityType}</p>
+                          <p className="text-emerald-700 uppercase tracking-widest font-semibold">Type</p>
+                          <p className="text-slate-900">{log.entityType}</p>
                         </div>
                         <div>
-                          <p className="text-emerald-400 uppercase tracking-widest">Actor</p>
-                          <p className="text-white font-medium">{log.actorName}</p>
+                          <p className="text-emerald-700 uppercase tracking-widest font-semibold">Actor</p>
+                          <p className="text-slate-900 font-medium">{log.actorName}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Timestamp */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-emerald-300 whitespace-nowrap">
+                      <p className="text-xs text-emerald-700 whitespace-nowrap font-medium">
                         {new Date(log.createdAt).toLocaleString("en-US", {
                           month: "short",
                           day: "numeric",

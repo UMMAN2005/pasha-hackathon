@@ -1,5 +1,4 @@
 import { listAuctions } from "@/server/services/auction";
-import { formatAzn } from "@/lib/money";
 import { GlassCard, SectionTitle } from "@/components/ui/kit";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import Link from "next/link";
@@ -100,11 +99,8 @@ export default async function MarketplacePage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                    <span className="line-through">
-                      {formatAzn(auction.askPrice)}
-                    </span>
                     <span className="px-2 py-1 bg-slate-100 rounded text-slate-700 font-semibold">
-                      {auction.qty} qty
+                      {auction.qty} units
                     </span>
                   </div>
 

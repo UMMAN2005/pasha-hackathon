@@ -92,7 +92,7 @@ export default function ListingsPage() {
       {/* Pickup Confirmation Section */}
       <div className="animate-fade-up">
         <GlassCard className="p-6 border border-emerald-200/20" rise>
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Package className="h-5 w-5" />
             Confirm pickup
           </h2>
@@ -103,7 +103,7 @@ export default function ListingsPage() {
               value={pickupCode}
               onChange={(e) => setPickupCode(e.target.value.toUpperCase())}
               maxLength={6}
-              className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg font-mono text-white placeholder-white/40 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-emerald-500/50"
+              className="flex-1 px-4 py-2 bg-white border border-slate-300 rounded-lg font-mono text-slate-900 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/50"
               data-testid="pickup-input"
             />
             <button
@@ -116,10 +116,10 @@ export default function ListingsPage() {
             </button>
           </div>
           {error && (
-            <p className="text-sm text-rose-400 mt-3">{error}</p>
+            <p className="text-sm text-rose-600 mt-3">{error}</p>
           )}
           {success && (
-            <p className="text-sm text-emerald-400 mt-3">{success}</p>
+            <p className="text-sm text-emerald-600 mt-3">{success}</p>
           )}
         </GlassCard>
       </div>
@@ -134,12 +134,12 @@ export default function ListingsPage() {
 
         {loadingListings ? (
           <GlassCard className="p-12 text-center" rise>
-            <p className="text-emerald-200 animate-pulse">Loading listings...</p>
+            <p className="text-emerald-600 animate-pulse">Loading listings...</p>
           </GlassCard>
         ) : auctions.length === 0 ? (
           <GlassCard className="p-12 text-center" rise>
-            <p className="text-white text-lg">No active listings</p>
-            <p className="text-emerald-300 text-sm mt-2">New listings coming soon</p>
+            <p className="text-slate-900 text-lg">No active listings</p>
+            <p className="text-emerald-700 text-sm mt-2">New listings coming soon</p>
           </GlassCard>
         ) : (
           <div className="grid gap-5">
@@ -155,11 +155,11 @@ export default function ListingsPage() {
                   key={auction.id}
                   className={`animate-fade-up ${idx === 0 ? "" : idx === 1 ? "delay-1" : "delay-2"}`}
                 >
-                  <GlassCard className="p-6 border border-white/10 hover:border-white/30" rise>
+                  <GlassCard className="p-6 border border-slate-200 hover:border-slate-300" rise>
                     <div className="grid grid-cols-4 gap-6">
                       {/* Photo & Title */}
                       <div className="col-span-1 space-y-3">
-                        <div className="aspect-square rounded-lg overflow-hidden border border-white/20">
+                        <div className="aspect-square rounded-lg overflow-hidden border border-slate-200">
                           <ProductThumb
                             src={productImage(auction.category || "default")}
                             alt={auction.title}
@@ -167,10 +167,10 @@ export default function ListingsPage() {
                           />
                         </div>
                         <div>
-                          <h3 className="font-bold text-white text-sm line-clamp-2">
+                          <h3 className="font-bold text-slate-900 text-sm line-clamp-2">
                             {auction.title}
                           </h3>
-                          <p className="text-xs text-emerald-300 mt-1 flex items-center gap-1">
+                          <p className="text-xs text-emerald-700 mt-1 flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             {auction.city}
                           </p>
@@ -180,15 +180,15 @@ export default function ListingsPage() {
                       {/* Prices & Info */}
                       <div className="col-span-1 space-y-3">
                         <div>
-                          <p className="text-xs text-emerald-400 uppercase tracking-widest">Minimum</p>
-                          <p className="text-lg font-bold text-white">
+                          <p className="text-xs text-emerald-700 uppercase tracking-widest">Minimum</p>
+                          <p className="text-lg font-bold text-slate-900">
                             {formatAzn(auction.askPrice)}
                           </p>
-                          <p className="text-xs text-emerald-300">-{auction.discountPercent}%</p>
+                          <p className="text-xs text-emerald-700">-{auction.discountPercent}%</p>
                         </div>
                         <div>
-                          <p className="text-xs text-emerald-400 uppercase tracking-widest">Quantity</p>
-                          <p className="text-lg font-bold text-white">
+                          <p className="text-xs text-emerald-700 uppercase tracking-widest">Quantity</p>
+                          <p className="text-lg font-bold text-slate-900">
                             {auction.qty}
                           </p>
                         </div>
@@ -196,7 +196,7 @@ export default function ListingsPage() {
 
                       {/* Bid Leaderboard */}
                       <div className="col-span-1 space-y-2">
-                        <p className="text-xs text-emerald-400 uppercase tracking-widest font-bold">
+                        <p className="text-xs text-emerald-700 uppercase tracking-widest font-bold">
                           Bids ({auction.bidCount})
                         </p>
                         {detail?.bids.slice(0, 3).map((bid, bidIdx) => {
@@ -208,8 +208,8 @@ export default function ListingsPage() {
                               key={bid.id}
                               className={`flex items-center gap-2 p-2 rounded-lg ${
                                 isRecommended
-                                  ? "bg-emerald-500/20 border border-emerald-400/50 ring-2 ring-emerald-400/30"
-                                  : "bg-white/5 border border-white/10"
+                                  ? "bg-emerald-50 border border-emerald-300 ring-2 ring-emerald-300/50"
+                                  : "bg-slate-50 border border-slate-200"
                               }`}
                             >
                               <div className="text-xs font-bold w-5">
@@ -222,14 +222,14 @@ export default function ListingsPage() {
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-white truncate">
+                                <p className="text-xs font-semibold text-slate-900 truncate">
                                   {bid.buyerName}
                                 </p>
-                                <p className="text-xs text-emerald-300">
+                                <p className="text-xs text-emerald-700">
                                   {formatAzn(bid.pricePerUnit)}/unit
                                 </p>
                               </div>
-                              {isRecommended && <AlertCircle className="h-3 w-3 text-emerald-400" />}
+                              {isRecommended && <AlertCircle className="h-3 w-3 text-emerald-700" />}
                             </div>
                           );
                         })}
@@ -238,11 +238,11 @@ export default function ListingsPage() {
                       {/* AI Advice & Actions */}
                       <div className="col-span-1 space-y-3 flex flex-col">
                         {advice && recommendedBid && (
-                          <div className="bg-emerald-500/20 border border-emerald-400/30 rounded-lg p-3 flex-1 space-y-2">
+                          <div className="bg-emerald-50 border border-emerald-300 rounded-lg p-3 flex-1 space-y-2">
                             <div className="flex items-center gap-2">
                               <AIBadge label="Pick" />
                             </div>
-                            <p className="text-xs text-emerald-200 leading-tight">
+                            <p className="text-xs text-emerald-700 leading-tight">
                               {advice.reasoning}
                             </p>
                             <button
@@ -262,7 +262,7 @@ export default function ListingsPage() {
                               key={bid.id}
                               onClick={() => handleAcceptBid(bid.id)}
                               disabled={loading}
-                              className="text-xs px-3 py-2 border border-white/20 text-white rounded-lg hover:border-white/40 hover:bg-white/5 disabled:opacity-50 transition-all"
+                              className="text-xs px-3 py-2 border border-slate-300 text-slate-900 rounded-lg hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-50 transition-all"
                             >
                               Accept
                             </button>
@@ -289,8 +289,8 @@ export default function ListingsPage() {
         {closedAuctions.length === 0 ? (
           <GlassCard className="p-12 text-center" rise>
             <CheckCircle className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-            <p className="text-white text-lg font-semibold">No closed auctions yet</p>
-            <p className="text-emerald-300 text-sm mt-1">
+            <p className="text-slate-900 text-lg font-semibold">No closed auctions yet</p>
+            <p className="text-emerald-700 text-sm mt-1">
               Completed auctions will appear here
             </p>
           </GlassCard>
@@ -299,56 +299,56 @@ export default function ListingsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-3 px-4 font-bold text-emerald-300">Product</th>
-                    <th className="text-left py-3 px-4 font-bold text-emerald-300">Category · City</th>
-                    <th className="text-left py-3 px-4 font-bold text-emerald-300">Buyer</th>
-                    <th className="text-right py-3 px-4 font-bold text-emerald-300">Unit price</th>
-                    <th className="text-right py-3 px-4 font-bold text-emerald-300">Qty</th>
-                    <th className="text-right py-3 px-4 font-bold text-emerald-300">Total</th>
-                    <th className="text-center py-3 px-4 font-bold text-emerald-300">Status</th>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left py-3 px-4 font-bold text-emerald-700">Product</th>
+                    <th className="text-left py-3 px-4 font-bold text-emerald-700">Category · City</th>
+                    <th className="text-left py-3 px-4 font-bold text-emerald-700">Buyer</th>
+                    <th className="text-right py-3 px-4 font-bold text-emerald-700">Unit price</th>
+                    <th className="text-right py-3 px-4 font-bold text-emerald-700">Qty</th>
+                    <th className="text-right py-3 px-4 font-bold text-emerald-700">Total</th>
+                    <th className="text-center py-3 px-4 font-bold text-emerald-700">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {closedAuctions.map((auction) => (
                     <tr
                       key={auction.id}
-                      className="border-b border-white/5 hover:bg-white/5 transition"
+                      className="border-b border-slate-100 hover:bg-slate-50 transition"
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 flex-shrink-0">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 flex-shrink-0">
                             <ProductThumb
                               src={auction.image}
                               alt={auction.title}
                               className="w-full h-full"
                             />
                           </div>
-                          <span className="text-white font-semibold truncate">
+                          <span className="text-slate-900 font-semibold truncate">
                             {auction.title}
                           </span>
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="text-emerald-300 text-xs">
+                        <p className="text-emerald-700 text-xs">
                           {auction.category} · {auction.city}
                         </p>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="text-white font-semibold">
+                        <p className="text-slate-900 font-semibold">
                           {auction.buyer ?? "—"}
                         </p>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        <p className="text-white font-bold">
+                        <p className="text-slate-900 font-bold">
                           {formatAzn(auction.soldPrice)}
                         </p>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        <p className="text-white font-semibold">{auction.qty}</p>
+                        <p className="text-slate-900 font-semibold">{auction.qty}</p>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        <p className="text-white font-black">
+                        <p className="text-slate-900 font-black">
                           {formatAzn(auction.total)}
                         </p>
                       </td>

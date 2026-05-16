@@ -8,10 +8,10 @@ import {
   ShoppingCart,
   ClipboardList,
   Gavel,
-  MapPinned,
   Users,
   Navigation,
   ListChecks,
+  Sparkles,
   LogOut,
   Leaf,
 } from "lucide-react";
@@ -42,12 +42,12 @@ export function AppShell({
           { label: "Overview", icon: LayoutDashboard, href: "/admin" },
           { label: "AI Queue", icon: ListChecks, href: "/admin/recommendations" },
           { label: "Risk", icon: AlertTriangle, href: "/admin/inventory" },
-          { label: "Branches", icon: MapPinned, href: "/admin/branches" },
           { label: "Customers", icon: Users, href: "/admin/customers" },
           { label: "Auction", icon: Gavel, href: "/admin/listings" },
           { label: "Audit", icon: ClipboardList, href: "/admin/audit" },
         ]
       : [
+          { label: "AI Concierge", icon: Sparkles, href: "/marketplace/concierge" },
           { label: "Dashboard", icon: LayoutDashboard, href: "/marketplace/dashboard" },
           { label: "Market", icon: ShoppingCart, href: "/marketplace" },
           {

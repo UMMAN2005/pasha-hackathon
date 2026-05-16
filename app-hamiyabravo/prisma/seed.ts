@@ -502,7 +502,7 @@ export async function seedDatabase() {
       while (used.has(bi)) bi = (bi + 1) % branchIds.length;
       used.add(bi);
       const qty = ri(r, 25, 420);
-      const expDays = ri(r, -2, 16);
+      const expDays = ri(r, 6, 16);
       const id = uuidv5(`gbatch-${p.sku}-${k}`);
       genBatches.push({
         id,
@@ -515,10 +515,11 @@ export async function seedDatabase() {
         retailPrice: p._retail,
         conditionStatus: r() < 0.08 ? "CHECK_REQUIRED" : "GOOD",
       });
-      const base = Math.min(
-        90,
-        Math.max(1, Math.round(qty / Math.max(2, expDays + 3)))
-      );
+      // Varied sell-through (~0.6%–5.6%/day) spreads risk across the
+      // inventory instead of pinning everything at 100, while keeping a
+      // healthy share high-risk for the auction queue.
+      const sellRate = 0.006 + r() * 0.05;
+      const base = Math.max(1, Math.round(qty * sellRate));
       for (let d = 0; d < 14; d++) {
         sales.push({
           productId: p.id,
@@ -563,13 +564,52 @@ async function seedMarketplace(today: Date) {
     await prisma.company.findMany({ where: { type: "BUYER" } })
   ).map((c) => ({ id: c.id, name: c.legalName }));
 
-  // Hero auctions stay ACTIVE with a clean bid ladder (demo flow).
+  const ACTIVE_TARGET = 6; // live auctions visible in the buyer market
+  const QUEUE_TARGET = 10; // pending recommendations awaiting approval
+
+  // Add a realistic bid ladder to a listing; returns the leading bid id.
+  const addLadder = async (
+    listingId: string,
+    price: number,
+    maxQty: number,
+    seed: number
+  ): Promise<string> => {
+    const r = rng(seed);
+    const n = ri(r, 2, 6);
+    const base = Math.round(price * (0.78 + r() * 0.12));
+    const rows = [];
+    let leadId = "";
+    for (let k = 0; k < n; k++) {
+      const buyer = buyers[ri(r, 0, buyers.length - 1)];
+      const id = uuidv5(`gbid-${listingId}-${k}`);
+      if (k === n - 1) leadId = id;
+      rows.push({
+        id,
+        listingId,
+        buyerCompanyId: buyer.id,
+        buyerName: buyer.name,
+        pricePerUnit: base + k * Math.max(30, Math.round(price * 0.04)),
+        quantity: ri(r, 5, Math.max(6, Math.min(maxQty, 60))),
+        status: k === n - 1 ? "LEADING" : "OUTBID",
+      });
+    }
+    await prisma.bid.createMany({ data: rows });
+    return leadId;
+  };
+
+  let activeCount = 0;
+  // Every live (6) + queued (10) product must be a distinct product.
+  const usedProducts = new Set<string>();
+
+  // 1) Hero ACTIVE auctions with a clean, readable bid ladder.
   const heroSkus = ["DARY-YOG-500", "MEAT-CHK-1000"];
   for (const sku of heroSkus) {
     const rec = await prisma.recommendation.findFirst({
       where: { status: "PENDING", batch: { product: { sku } } },
+      include: { batch: { include: { product: true } } },
     });
     if (!rec) continue;
+    usedProducts.add(rec.batch.product.id);
     const listing = await createListingFromRecommendation(rec.id, {
       id: "seed",
       name: "Seed",
@@ -597,23 +637,21 @@ async function seedMarketplace(today: Date) {
         status: i === ladder.length - 1 ? "LEADING" : "OUTBID",
       })),
     });
+    activeCount++;
   }
 
-  // Many more auctions from the strongest remaining recommendations.
-  const recs = await prisma.recommendation.findMany({
-    where: {
-      status: "PENDING",
-      actionType: { in: ["LIST_B2B", "BUNDLE"] },
-    },
+  // 2) Fill the buyer market up to ACTIVE_TARGET with the strongest
+  //    recs — one per distinct product.
+  const activeRecs = await prisma.recommendation.findMany({
+    where: { status: "PENDING", actionType: { in: ["LIST_B2B", "BUNDLE"] } },
     include: { batch: { include: { product: true } } },
-    orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
-    take: 22,
+    orderBy: { expectedRecovery: "desc" },
+    take: 300,
   });
-
-  const acceptedListingIds: string[] = [];
-  let li = 0;
-  for (const rec of recs) {
+  for (const rec of activeRecs) {
+    if (activeCount >= ACTIVE_TARGET) break;
     if (heroSkus.includes(rec.batch.product.sku)) continue;
+    if (usedProducts.has(rec.batch.product.id)) continue;
     let listing;
     try {
       listing = await createListingFromRecommendation(rec.id, {
@@ -623,40 +661,56 @@ async function seedMarketplace(today: Date) {
     } catch {
       continue;
     }
-    const r = rng(7000 + li);
-    const nBids = ri(r, 2, 6);
-    const base = Math.round(listing.price * (0.78 + r() * 0.12));
-    const bidIds: string[] = [];
-    const rows = [];
-    for (let k = 0; k < nBids; k++) {
-      const buyer = buyers[ri(r, 0, buyers.length - 1)];
-      const price = base + k * Math.max(30, Math.round(listing.price * 0.04));
-      const id = uuidv5(`gbid-${listing.id}-${k}`);
-      bidIds.push(id);
-      rows.push({
-        id,
-        listingId: listing.id,
-        buyerCompanyId: buyer.id,
-        buyerName: buyer.name,
-        pricePerUnit: price,
-        quantity: ri(r, 5, Math.max(6, Math.min(listing.maxQty, 60))),
-        status: k === nBids - 1 ? "LEADING" : "OUTBID",
+    usedProducts.add(rec.batch.product.id);
+    await addLadder(
+      listing.id,
+      listing.price,
+      listing.maxQty,
+      7000 + activeCount
+    );
+    activeCount++;
+  }
+
+  // 3) Reserve QUEUE_TARGET distinct-product recs for the live AI queue
+  //    (left PENDING). List & accept a capped set of the rest as
+  //    historical KPI volume; anything beyond is trimmed in step 4.
+  const HIST_TARGET = 20;
+  const remainingRecs = await prisma.recommendation.findMany({
+    where: { status: "PENDING", actionType: { in: ["LIST_B2B", "BUNDLE"] } },
+    include: { batch: { include: { product: true } } },
+    orderBy: { expectedRecovery: "desc" },
+  });
+  const reservedIds: string[] = [];
+  let hi = 0;
+  for (const rec of remainingRecs) {
+    const pid = rec.batch.product.id;
+    if (reservedIds.length < QUEUE_TARGET && !usedProducts.has(pid)) {
+      usedProducts.add(pid);
+      reservedIds.push(rec.id); // stays PENDING — this is the AI queue
+      continue;
+    }
+    if (hi >= HIST_TARGET) continue; // surplus is trimmed in step 4
+    let listing;
+    try {
+      listing = await createListingFromRecommendation(rec.id, {
+        id: "seed",
+        name: "Seed",
       });
+    } catch {
+      continue;
     }
-    await prisma.bid.createMany({ data: rows });
-    // Accept ~60% of these so there are orders & pickups.
-    if (li % 5 !== 0) {
-      try {
-        await acceptBid(bidIds[bidIds.length - 1], {
-          id: uuidv5("user-aysel"),
-          name: "Aysel",
-        });
-        acceptedListingIds.push(listing.id);
-      } catch {
-        /* listing race — skip */
-      }
+    const leadId = await addLadder(
+      listing.id,
+      listing.price,
+      listing.maxQty,
+      9000 + hi
+    );
+    try {
+      await acceptBid(leadId, { id: uuidv5("user-aysel"), name: "Aysel" });
+    } catch {
+      /* listing race — skip */
     }
-    li++;
+    hi++;
   }
 
   // Complete pickups on most accepted orders so KPIs & impact are rich.
@@ -695,6 +749,11 @@ async function seedMarketplace(today: Date) {
     });
     oi++;
   }
+
+  // 4) Keep exactly the reserved distinct-product recs as the AI queue.
+  await prisma.recommendation.deleteMany({
+    where: { status: "PENDING", id: { notIn: reservedIds } },
+  });
 }
 
 const isDirectRun = process.argv[1] === fileURLToPath(import.meta.url);

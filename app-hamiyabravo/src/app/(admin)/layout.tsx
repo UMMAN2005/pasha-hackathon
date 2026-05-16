@@ -3,6 +3,7 @@ import { ForbiddenError } from "@/lib/errors";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { prisma } from "@/lib/db";
+import { AI_QUEUE_LIMIT } from "@/lib/queue";
 
 export default async function AdminLayout({
   children,
@@ -35,7 +36,7 @@ export default async function AdminLayout({
       surface="admin"
       userName={user.name}
       userRole={user.role}
-      queueCount={queueCount}
+      queueCount={Math.min(queueCount, AI_QUEUE_LIMIT)}
     >
       {children}
     </AppShell>

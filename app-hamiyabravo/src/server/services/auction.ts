@@ -37,7 +37,7 @@ export interface AuctionCard {
 
 export async function listAuctions(): Promise<AuctionCard[]> {
   const listings = await prisma.marketplaceListing.findMany({
-    where: { status: { in: ["ACTIVE", "RESERVED"] } },
+    where: { status: "ACTIVE" },
     include: {
       bids: { orderBy: { pricePerUnit: "desc" } },
       batch: {

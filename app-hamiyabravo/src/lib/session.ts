@@ -23,7 +23,9 @@ function getSessionOptions() {
     password: getEnv().SESSION_PASSWORD,
     cookieName: "hb_session",
     cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
+      // Demo is served over an HTTP SSH tunnel — a Secure cookie would be
+      // dropped by the browser and silently bounce users back to login.
+      secure: false,
       httpOnly: true,
       sameSite: "lax" as const,
       maxAge: 7 * 24 * 60 * 60,
@@ -97,7 +99,7 @@ export function isBuyer(role: Role): boolean {
 
 export function roleHome(role: Role): string {
   if (isBuyer(role)) {
-    return "/marketplace/dashboard";
+    return "/marketplace/concierge";
   }
   return "/admin";
 }

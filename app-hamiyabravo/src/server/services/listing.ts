@@ -11,7 +11,8 @@ export interface Actor {
 
 export async function createListingFromRecommendation(
   recId: string,
-  actor: Actor
+  actor: Actor,
+  priceOverride?: number
 ) {
   return await prisma.$transaction(async (tx) => {
     const rec = await tx.recommendation.findUniqueOrThrow({
@@ -42,12 +43,28 @@ export async function createListingFromRecommendation(
       orderBy: { generatedAt: "desc" },
     });
 
-    const discount = discountPercent(risk?.riskScore ?? 0);
-    const listingPrice = listingUnitPrice(
+    const aiDiscount = discountPercent(risk?.riskScore ?? 0);
+    const aiPrice = listingUnitPrice(
       batch.retailPrice,
       batch.costPerUnit,
-      discount
+      aiDiscount
     );
+    const listingPrice =
+      priceOverride != null
+        ? Math.max(
+            batch.costPerUnit,
+            Math.min(batch.retailPrice, Math.round(priceOverride))
+          )
+        : aiPrice;
+    const discount =
+      batch.retailPrice > 0
+        ? Math.max(
+            0,
+            Math.round(
+              ((batch.retailPrice - listingPrice) / batch.retailPrice) * 100
+            )
+          )
+        : aiDiscount;
 
     const availableQty = batch.quantityOnHand - batch.quantityReserved;
     // Sensible wholesale minimum order: ~10% of the lot, clamped 5–25,

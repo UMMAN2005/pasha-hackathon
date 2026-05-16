@@ -9,6 +9,7 @@ import { writeAudit } from "@/server/audit";
 
 const ApproveSchema = z.object({
   recId: z.string().uuid(),
+  customPrice: z.number().positive().optional(),
 });
 
 const RejectSchema = z.object({
@@ -18,13 +19,18 @@ const RejectSchema = z.object({
 
 export async function approveRecommendation(input: unknown) {
   const session = await requireRole("HQ_ADMIN", "BRANCH_MANAGER");
-  const { recId } = ApproveSchema.parse(input);
+  const { recId, customPrice } = ApproveSchema.parse(input);
 
-  const listing = await createListingFromRecommendation(recId, {
-    id: session.userId,
-    name: (await prisma.user.findUniqueOrThrow({ where: { id: session.userId } }))
-      .name,
-  });
+  const listing = await createListingFromRecommendation(
+    recId,
+    {
+      id: session.userId,
+      name: (
+        await prisma.user.findUniqueOrThrow({ where: { id: session.userId } })
+      ).name,
+    },
+    customPrice
+  );
 
   revalidatePath("/admin/recommendations");
   revalidatePath("/admin");
